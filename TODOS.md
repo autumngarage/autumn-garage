@@ -25,6 +25,8 @@ journal-entry pointer for the full context.
 - [x] **Registry write is visible.** Shipped in [touchstone#49](https://github.com/autumngarage/touchstone/pull/49). Every registry outcome now prints a visible line ("Registered in …", "Already registered …", "Registry skipped (--no-register)"). Default stays opt-in for script compat.
 - [x] **First-push Codex review exempt.** Shipped in touchstone#49. `hooks/codex-review.sh` + `scripts/codex-review.sh` skip review when `git rev-list --count HEAD == 1` on the default branch. Defensive fall-through if detection fails. `CODEX_REVIEW_FORCE=1` still bypasses.
 - [ ] **`scripts/open-pr.sh` supports `--base <branch>` for stacked PRs.** Today it hardcodes `--base $DEFAULT_BRANCH`. The Cortex R2 agent had to bypass with `gh pr create --base <r1-branch>` to open a stacked PR. Accept an explicit base, or auto-detect from the parent tracking branch.
+- [ ] **Document the "don't stack PRs with `gh pr merge --squash`" gotcha** in `principles/git-workflow.md` (touchstone). See [`journal/2026-04-18-stacked-merge-recovery`](.cortex/journal/2026-04-18-stacked-merge-recovery.md). Alternative: auto-detect stack context in `open-pr.sh` and warn.
+- [ ] **Coordination playbook:** when the user says "ship it all," default to bundled rounds from the start rather than stacked PRs. Faster review, cleaner merge.
 - [x] **`touchstone doctor --project` surfaces `.cortex/` + `.sentinel/` presence.** Shipped in [touchstone#48](https://github.com/autumngarage/touchstone/pull/48).
 
 ## Cortex
