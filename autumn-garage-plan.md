@@ -1,8 +1,18 @@
-# Autumn Garage — Coordinated Upgrade Plan (v2)
+# Autumn Garage — Coordinated Upgrade Plan (v3)
 
 **Date:** 2026-04-18
-**Scope:** Touchstone (v1.1.0) · Cortex (v0.1.0-dev0) · Sentinel (v0.2.0)
-**Revision note:** v2 incorporates Codex critique (see §11). Key changes: CLI-primary write contract, Phase B dogfood before freeze, 10-week timeline, monorepo/CI/multi-user permutations added, scope cut to ingest + single-producer + single-hook MVP.
+**Scope:** Touchstone (v1.1.0) · Cortex (v0.1.0, shipped on Homebrew 2026-04-18) · Sentinel (v0.2.0)
+**Revision note:** v3 updates for reality. Cortex Phase B shipped today as v0.1.0 on `brew install autumngarage/cortex/cortex`, which invalidates v2's assumption that Phase B was weeks out. The "Cortex Integration Contract" sketched in v2 is largely already specified in Cortex Protocol v0.2.0 — T1.6 sentinel-cycle, T1.7 touchstone-arch-diff, T1.9 pr-merged, with templates under `.cortex/templates/`. Remaining work is *operationalization* in Cortex Phase E (consumers writing those entries) and authoring helpers in Cortex Phase D (`cortex journal draft`, `cortex plan spawn`). This plan now lives inside the `autumn-garage` coordination repo; the canonical decision trail is in `.cortex/` (doctrine + plans + journal). This file is a narrative index — prefer `.cortex/state.md` for current priorities.
+
+**v3 changes from v2:** timeline collapsed (Phase B not pending); CIC v0 reframed as Cortex Protocol v0.2.0 + Phase E operationalization; coordination repo now exists (`autumn-garage`); dogfood target named (`autumn-mail`, SwiftUI Gmail client via `gws` + MLX Swift). v2 sections below (install scenarios, environment permutations, operational concerns) remain valid and are retained without re-editing.
+
+---
+
+## v2 content (retained, still correct)
+
+The sections below were written against v2 assumptions (Cortex pending). Read them with the v3 caveat that Cortex v0.1.0 already ships, and that "CIC v0" has largely resolved into Cortex Protocol v0.2.0.
+
+---
 
 ---
 
