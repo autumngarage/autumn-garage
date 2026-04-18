@@ -29,6 +29,7 @@ journal-entry pointer for the full context.
 
 ## Cortex
 
+- [ ] **`cortex doctor --audit` classifies T1.2/T1.3/T1.4/T1.6/T1.7 fires.** Phase B first-slice only shipped T1.1/T1.5/T1.8/T1.9 classification. T1.6 specifically blocks autumn-mail's full validation loop: Sentinel #74 ships T1.6 journal writes, but `doctor --audit` won't match them to cycle fires until this lands. Source: sentinel#74 agent report + existing Phase C deferrals in cortex's own plans.
 - [x] **`plans/template.md` shipped in templates/.** Shipped in [cortex#16](https://github.com/autumngarage/cortex/pull/16) — canonical Plan template with required frontmatter + exact section headings + Goal-hash hint that surfaces doctor's helpful recompute message.
 - [x] **`.cortex/README.md` scaffolded by `cortex init`.** Shipped in cortex#16 — orientation doc naming all six layers, safe-to-hand-edit rules, pointers to the Protocol.
 - [x] **Stubs in `state.md` / `map.md` carry guidance.** Shipped in [cortex#19](https://github.com/autumngarage/cortex/pull/19). "Hand-authored placeholder" language + "hand-editable until `cortex refresh-{layer}` ships" frontmatter note. `.cortex/templates/README.md` updated to match.
@@ -46,7 +47,7 @@ journal-entry pointer for the full context.
 - [x] **`.sentinel/.gitignore` scaffolded by init.** Shipped in [sentinel#71](https://github.com/autumngarage/sentinel/pull/71) — `state/` gitignored; durable artifacts (config.toml, runs/, proposals/, scans/, backlog.md, lenses.md, domain_brief.md) kept trackable. Never overwrites.
 - [ ] **"What was created" summary after first `sentinel work`.** Today `.sentinel/config.toml`, `lenses.md`, `domain_brief.md`, etc. appear silently. List them at end of first cycle.
 - [ ] **Budget prompt on first real cycle.** If `--budget` not passed on a TTY, prompt: "Set a budget for this cycle? (default: daily cap $15)". Avoid surprise runaways.
-- [ ] **Operationalize Cortex Protocol T1.6.** At cycle end, if `.cortex/` present, write `journal/sentinel-cycle.md` entry. Gated on Cortex Phase E integration; tracked here for visibility.
+- [x] **Operationalize Cortex Protocol T1.6.** Shipped in [sentinel#74](https://github.com/autumngarage/sentinel/pull/74) stacked on #73, per the plan at [`plans/sentinel-cortex-t16-integration`](.cortex/plans/sentinel-cortex-t16-integration.md). 34 new tests, 8/12 success criteria automated, 1 integration-test-gated-on-real-cortex, 3 requiring manual verification or downstream Cortex work. Real dependency surfaced: criterion #3 (doctor --audit matching T1.6 fires) can't land until Cortex classifies T1.6 in its audit (Phase B first-slice deferred).
 - [x] **`sentinel status` surfaces Cortex + Touchstone presence.** Shipped in [sentinel#73](https://github.com/autumngarage/sentinel/pull/73).
 - [ ] **Pre-commit / branch-discipline composition.** `sentinel work` tripped `no-commit-to-branch` during its own work. Clarify which tool owns git discipline when multiple are co-installed (Touchstone's hook, presumably — but Sentinel's feature-branch behavior must agree).
 
