@@ -9,7 +9,7 @@ journal-entry pointer for the full context.
 ## Cross-tool / shared
 
 - [x] **Interactive-by-default across all first-run commands.** Doctrine 0002 implemented in [touchstone#47](https://github.com/autumngarage/touchstone/pull/47), [sentinel#72](https://github.com/autumngarage/sentinel/pull/72), [cortex#17](https://github.com/autumngarage/cortex/pull/17). Each tool has a TTY-gated wizard, `--yes` defaults, non-TTY fallback, and prints an "Equivalent to rerun" block.
-- [ ] **Each tool's `doctor` surfaces siblings' presence + version.** `cortex doctor` says "sentinel detected at 0.2.0"; `touchstone doctor` says "cortex detected at 0.1.0"; etc. One-line detection, massive orientation win for new users.
+- [x] **Each tool's `doctor` surfaces siblings' presence + version.** Shipped R3 across all three — [touchstone#48](https://github.com/autumngarage/touchstone/pull/48) stacked on #47, [cortex#18](https://github.com/autumngarage/cortex/pull/18) stacked on #17, [sentinel#73](https://github.com/autumngarage/sentinel/pull/73) stacked on #72. Consistent pattern: `shutil.which` / `command -v` CLI detection + marker-file check + 3s-timed version shell-out with `<tool> version` / `<tool> --version` fallback. Zero code imports (Doctrine 0002). ✓/—/! glyphs for full/absent/mixed state.
 - [ ] **"Getting Started with the Full Garage" doc.** Single page, pinned from each tool's README, walks a brand-new user from `brew install` to first working cycle. Lives in `autumn-garage/` or as a pinned repo in the org.
 - [ ] **Default-branch consistency.** All three tools respect `git config init.defaultBranch` (defaulting to `main`). Touchstone currently creates `master`.
 - [ ] **Graceful "first commit ever" handling.** Bootstrap paradox — `no-commit-to-branch` pre-commit hook blocks the very first commit when there's nothing upstream to branch from. Either `touchstone new` makes the initial commit itself, or the hook exempts commit-#0.
@@ -25,7 +25,7 @@ journal-entry pointer for the full context.
 - [ ] **Registry is opt-in (or confirmed).** Today `touchstone new` registers silently unless `--no-register` is passed. Flip default to opt-in or add a prompt.
 - [ ] **First-push Codex review exempt.** First push on a fresh scaffold is reviewing AI-generated template files, wastes tokens/quota. Skip review for the initial push (identified by HEAD being one commit old).
 - [ ] **`scripts/open-pr.sh` supports `--base <branch>` for stacked PRs.** Today it hardcodes `--base $DEFAULT_BRANCH`. The Cortex R2 agent had to bypass with `gh pr create --base <r1-branch>` to open a stacked PR. Accept an explicit base, or auto-detect from the parent tracking branch.
-- [ ] **`touchstone doctor --project` surfaces `.cortex/` + `.sentinel/` presence.** Cross-tool doctor integration per shared item above.
+- [x] **`touchstone doctor --project` surfaces `.cortex/` + `.sentinel/` presence.** Shipped in [touchstone#48](https://github.com/autumngarage/touchstone/pull/48).
 
 ## Cortex
 
@@ -36,7 +36,7 @@ journal-entry pointer for the full context.
 - [ ] **Version surfacing is clearer for new users.** Three version numbers (SPEC v0.3.1-dev, Protocol v0.2.0, CLI v0.1.0) in `cortex version` output. Either consolidate for user-facing display or group under headings (author vs. consumer).
 - [ ] **`cortex init` prints what was created.** Today it prints "Scaffolded /path (spec v0.3.1-dev)" and next steps. A file count / structure summary would reassure the user.
 - [ ] **Interactive mode for `cortex init`.** Per [`doctrine/0002`](.cortex/doctrine/0002-interactive-by-default.md). Prompt: add `@.cortex/protocol.md` + `@.cortex/state.md` imports to existing CLAUDE.md? add `.cortex/pending/` + `.cortex/rejected/` to `.gitignore`?
-- [ ] **`cortex doctor` surfaces Touchstone + Sentinel presence.** Shared doctor integration.
+- [x] **`cortex doctor` surfaces Touchstone + Sentinel presence.** Shipped in [cortex#18](https://github.com/autumngarage/cortex/pull/18).
 
 ## Sentinel
 
@@ -47,7 +47,7 @@ journal-entry pointer for the full context.
 - [ ] **"What was created" summary after first `sentinel work`.** Today `.sentinel/config.toml`, `lenses.md`, `domain_brief.md`, etc. appear silently. List them at end of first cycle.
 - [ ] **Budget prompt on first real cycle.** If `--budget` not passed on a TTY, prompt: "Set a budget for this cycle? (default: daily cap $15)". Avoid surprise runaways.
 - [ ] **Operationalize Cortex Protocol T1.6.** At cycle end, if `.cortex/` present, write `journal/sentinel-cycle.md` entry. Gated on Cortex Phase E integration; tracked here for visibility.
-- [ ] **`sentinel status` surfaces Cortex + Touchstone presence.** Shared doctor integration.
+- [x] **`sentinel status` surfaces Cortex + Touchstone presence.** Shipped in [sentinel#73](https://github.com/autumngarage/sentinel/pull/73).
 - [ ] **Pre-commit / branch-discipline composition.** `sentinel work` tripped `no-commit-to-branch` during its own work. Clarify which tool owns git discipline when multiple are co-installed (Touchstone's hook, presumably — but Sentinel's feature-branch behavior must agree).
 
 ---
@@ -61,3 +61,4 @@ journal-entry pointer for the full context.
 - [x] **Five scaffold-friction findings** journaled: [`journal/2026-04-18-scaffold-friction-findings`](.cortex/journal/2026-04-18-scaffold-friction-findings.md). 2026-04-18.
 - [x] **Round 1 shipped across all three tools** via three parallel background agents — [touchstone#46](https://github.com/autumngarage/touchstone/pull/46), [cortex#16](https://github.com/autumngarage/cortex/pull/16), [sentinel#71](https://github.com/autumngarage/sentinel/pull/71). Regression pass against `/tmp/dogfood-check` confirmed all five original frictions fixed; see [`journal/2026-04-18-r1-regression-pass`](.cortex/journal/2026-04-18-r1-regression-pass.md). 2026-04-18.
 - [x] **Round 2 shipped across all three tools** — interactive-by-default wizards implementing Doctrine 0002. [touchstone#47](https://github.com/autumngarage/touchstone/pull/47) stacked on #46, [sentinel#72](https://github.com/autumngarage/sentinel/pull/72) stacked on #71, [cortex#17](https://github.com/autumngarage/cortex/pull/17) stacked on #16. Three gotchas surfaced and fixed in-PR: Touchstone `open-pr.sh` hardcoded `--base main` (workaround, tracked as new TODO), latent stdin-hang in review-config `read` calls (fixed), `--yes` non-determinism on machines with cortex+sentinel installed (test harness forces explicit `--no-with-*`). 2026-04-18.
+- [x] **Round 3 shipped across all three tools** — each doctor/status surfaces sibling presence + version. [touchstone#48](https://github.com/autumngarage/touchstone/pull/48) stacked on #47, [cortex#18](https://github.com/autumngarage/cortex/pull/18) stacked on #17, [sentinel#73](https://github.com/autumngarage/sentinel/pull/73) stacked on #72. Consistent convergent detection pattern across all three tools without shared code (Doctrine 0002 honored). All three agents independently caught Sentinel's Click `--version` convention and added the fallback. 2026-04-18.
