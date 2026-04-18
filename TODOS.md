@@ -8,7 +8,7 @@ journal-entry pointer for the full context.
 
 ## Cross-tool / shared
 
-- [ ] **Interactive-by-default across all first-run commands.** See [`doctrine/0002`](.cortex/doctrine/0002-interactive-by-default.md). Each tool ships its wizard; flags remain as overrides.
+- [x] **Interactive-by-default across all first-run commands.** Doctrine 0002 implemented in [touchstone#47](https://github.com/autumngarage/touchstone/pull/47), [sentinel#72](https://github.com/autumngarage/sentinel/pull/72), [cortex#17](https://github.com/autumngarage/cortex/pull/17). Each tool has a TTY-gated wizard, `--yes` defaults, non-TTY fallback, and prints an "Equivalent to rerun" block.
 - [ ] **Each tool's `doctor` surfaces siblings' presence + version.** `cortex doctor` says "sentinel detected at 0.2.0"; `touchstone doctor` says "cortex detected at 0.1.0"; etc. One-line detection, massive orientation win for new users.
 - [ ] **"Getting Started with the Full Garage" doc.** Single page, pinned from each tool's README, walks a brand-new user from `brew install` to first working cycle. Lives in `autumn-garage/` or as a pinned repo in the org.
 - [ ] **Default-branch consistency.** All three tools respect `git config init.defaultBranch` (defaulting to `main`). Touchstone currently creates `master`.
@@ -16,7 +16,7 @@ journal-entry pointer for the full context.
 
 ## Touchstone
 
-- [ ] **`touchstone new <dir>` interactive wizard.** Flags stay; wizard runs when called on a TTY without conflicting flags. Prompts: dir, project type (auto-detected, confirm), language-scaffold? reviewer, register-in-touchstone-projects? initialize Cortex? initialize Sentinel? create initial commit? create GitHub repo? At end, print the equivalent flag form. Grounds-in [`doctrine/0002`](.cortex/doctrine/0002-interactive-by-default.md).
+- [x] **`touchstone new <dir>` interactive wizard.** Shipped in [touchstone#47](https://github.com/autumngarage/touchstone/pull/47) (stacked on #46). 7 new prompts, 8 new flags, `--yes` support, Ctrl-C cleanup via trap, "Equivalent to rerun" teach-by-doing block. Fixed latent stdin-hang in review-config `read` calls as part of non-TTY hardening.
 - [x] **`--type swift` scaffolds a Swift Package.** Shipped in [touchstone#46](https://github.com/autumngarage/touchstone/pull/46) — `Package.swift` + `Sources/<PascalName>/<PascalName>App.swift` + `Tests/<PascalName>Tests/SmokeTests.swift`. Follows PR #44 pattern.
 - [x] **Per-profile `.gitignore` entries.** Shipped in touchstone#46 — `--type swift` appends `.build/`, `.swiftpm/`, `*.xcodeproj/`, `DerivedData/`, `Package.resolved`.
 - [x] **`touchstone new` creates initial commit.** Shipped in touchstone#46 — created before hooks install so `no-commit-to-branch` never fires. Bootstrap paradox solved.
@@ -24,6 +24,7 @@ journal-entry pointer for the full context.
 - [x] **Template `{{PROJECT_NAME}}` substitution works non-TTY.** Shipped in touchstone#46 — `INPUT_NAME` defaults to `basename(PROJECT_DIR)` on non-TTY fresh scaffolds, so CLAUDE.md/AGENTS.md get substituted in agent-driven flows.
 - [ ] **Registry is opt-in (or confirmed).** Today `touchstone new` registers silently unless `--no-register` is passed. Flip default to opt-in or add a prompt.
 - [ ] **First-push Codex review exempt.** First push on a fresh scaffold is reviewing AI-generated template files, wastes tokens/quota. Skip review for the initial push (identified by HEAD being one commit old).
+- [ ] **`scripts/open-pr.sh` supports `--base <branch>` for stacked PRs.** Today it hardcodes `--base $DEFAULT_BRANCH`. The Cortex R2 agent had to bypass with `gh pr create --base <r1-branch>` to open a stacked PR. Accept an explicit base, or auto-detect from the parent tracking branch.
 - [ ] **`touchstone doctor --project` surfaces `.cortex/` + `.sentinel/` presence.** Cross-tool doctor integration per shared item above.
 
 ## Cortex
@@ -39,9 +40,9 @@ journal-entry pointer for the full context.
 
 ## Sentinel
 
-- [ ] **Explicit `sentinel init` as the first-run path.** Today `sentinel work` auto-inits config, which means first-time users can't preview config before spending. `sentinel init` becomes the explicit entry; `sentinel work` requires config to exist (gracefully suggesting `sentinel init` if missing).
-- [ ] **Interactive `sentinel init` wizard.** Prompts: detected providers (multi-select), coder provider, reviewer provider (default to *different* from coder — enforce doctrine in defaults), daily budget cap, run a scan now? Print flag-form at end.
-- [ ] **Default config uses different providers for coder + reviewer.** Currently both claude (different models). Default should be e.g., coder=claude-sonnet, reviewer=codex-gpt. This is Sentinel's own doctrine; defaults should reflect it.
+- [x] **Explicit `sentinel init` as the first-run path.** Shipped in [sentinel#72](https://github.com/autumngarage/sentinel/pull/72) (stacked on #71). `sentinel init` unhidden and canonical; `sentinel work` still auto-inits but prints a visible warning pointing at `sentinel init`.
+- [x] **Interactive `sentinel init` wizard.** Shipped in sentinel#72 — providers multi-select, coder, reviewer (default different provider), models, budget, optional scan. `--yes` defaults; non-TTY preserves implicit behavior. Prints equivalent flag form.
+- [x] **Default config uses different providers for coder + reviewer.** Shipped in sentinel#72 — reviewer now defaults to `codex` (orthogonal provider family) instead of `gemini`. Fallback chain: codex→gemini→local→claude-with-warning. `apply_preset("recommended", ...)` now post-checks reviewer != coder.
 - [x] **`.sentinel/.gitignore` scaffolded by init.** Shipped in [sentinel#71](https://github.com/autumngarage/sentinel/pull/71) — `state/` gitignored; durable artifacts (config.toml, runs/, proposals/, scans/, backlog.md, lenses.md, domain_brief.md) kept trackable. Never overwrites.
 - [ ] **"What was created" summary after first `sentinel work`.** Today `.sentinel/config.toml`, `lenses.md`, `domain_brief.md`, etc. appear silently. List them at end of first cycle.
 - [ ] **Budget prompt on first real cycle.** If `--budget` not passed on a TTY, prompt: "Set a budget for this cycle? (default: daily cap $15)". Avoid surprise runaways.
@@ -59,3 +60,4 @@ journal-entry pointer for the full context.
 - [x] **First Sentinel dry-cycle** against autumn-mail — 6 custom lenses, 31/100 health score, 3 expansion proposals queued, $0.00 spend. 2026-04-18.
 - [x] **Five scaffold-friction findings** journaled: [`journal/2026-04-18-scaffold-friction-findings`](.cortex/journal/2026-04-18-scaffold-friction-findings.md). 2026-04-18.
 - [x] **Round 1 shipped across all three tools** via three parallel background agents — [touchstone#46](https://github.com/autumngarage/touchstone/pull/46), [cortex#16](https://github.com/autumngarage/cortex/pull/16), [sentinel#71](https://github.com/autumngarage/sentinel/pull/71). Regression pass against `/tmp/dogfood-check` confirmed all five original frictions fixed; see [`journal/2026-04-18-r1-regression-pass`](.cortex/journal/2026-04-18-r1-regression-pass.md). 2026-04-18.
+- [x] **Round 2 shipped across all three tools** — interactive-by-default wizards implementing Doctrine 0002. [touchstone#47](https://github.com/autumngarage/touchstone/pull/47) stacked on #46, [sentinel#72](https://github.com/autumngarage/sentinel/pull/72) stacked on #71, [cortex#17](https://github.com/autumngarage/cortex/pull/17) stacked on #16. Three gotchas surfaced and fixed in-PR: Touchstone `open-pr.sh` hardcoded `--base main` (workaround, tracked as new TODO), latent stdin-hang in review-config `read` calls (fixed), `--yes` non-determinism on machines with cortex+sentinel installed (test harness forces explicit `--no-with-*`). 2026-04-18.
