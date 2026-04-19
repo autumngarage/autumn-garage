@@ -32,6 +32,7 @@ journal-entry pointer for the full context.
 
 ## Cortex
 
+- [ ] **Sibling-detection glyph set is underspecified.** Current R3 uses `✓` for "CLI installed" regardless of whether the project actually uses the tool — so `cortex doctor` in a repo without `.touchstone-config` still shows `✓ touchstone 1.2.2 (installed) — .touchstone-config absent`. Misleading. Propose four-state glyph set: `✓` marker present + CLI installed (fully wired), `○` CLI installed but marker absent (available but unused), `—` CLI not installed, `!` marker present but CLI missing. All three tools need updating (touchstone, cortex, sentinel) since each shipped R3 with the same two-state glyph bug. 2026-04-18.
 - [ ] **`cortex doctor --audit` classifies T1.2/T1.3/T1.4/T1.6/T1.7 fires.** Phase B first-slice only shipped T1.1/T1.5/T1.8/T1.9 classification. T1.6 specifically blocks autumn-mail's full validation loop: Sentinel #74 ships T1.6 journal writes, but `doctor --audit` won't match them to cycle fires until this lands. Source: sentinel#74 agent report + existing Phase C deferrals in cortex's own plans.
 - [x] **`plans/template.md` shipped in templates/.** Shipped in [cortex#16](https://github.com/autumngarage/cortex/pull/16) — canonical Plan template with required frontmatter + exact section headings + Goal-hash hint that surfaces doctor's helpful recompute message.
 - [x] **`.cortex/README.md` scaffolded by `cortex init`.** Shipped in cortex#16 — orientation doc naming all six layers, safe-to-hand-edit rules, pointers to the Protocol.
