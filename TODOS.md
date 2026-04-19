@@ -27,6 +27,7 @@ journal-entry pointer for the full context.
 - [ ] **`scripts/open-pr.sh` supports `--base <branch>` for stacked PRs.** Today it hardcodes `--base $DEFAULT_BRANCH`. The Cortex R2 agent had to bypass with `gh pr create --base <r1-branch>` to open a stacked PR. Accept an explicit base, or auto-detect from the parent tracking branch.
 - [ ] **Document the "don't stack PRs with `gh pr merge --squash`" gotcha** in `principles/git-workflow.md` (touchstone). See [`journal/2026-04-18-stacked-merge-recovery`](.cortex/journal/2026-04-18-stacked-merge-recovery.md). Alternative: auto-detect stack context in `open-pr.sh` and warn.
 - [ ] **Coordination playbook:** when the user says "ship it all," default to bundled rounds from the start rather than stacked PRs. Faster review, cleaner merge.
+- [ ] **R5 scaffold hardening (touchstone):** (1) initial commit must run AFTER `cortex init` / `sentinel init` so their artifacts are captured; (2) `--with-sentinel` should not blanket-ignore `.sentinel/` at project root — Sentinel's own `.sentinel/.gitignore` controls what's ignored; (3) fix SC2034 unused-variable warnings in `scripts/codex-review.sh` (C_GREEN, C_CYAN). Surfaced in [`journal/2026-04-18-r5-findings-from-fresh-scaffold`](.cortex/journal/2026-04-18-r5-findings-from-fresh-scaffold.md). Bundle as touchstone v1.2.1.
 - [x] **`touchstone doctor --project` surfaces `.cortex/` + `.sentinel/` presence.** Shipped in [touchstone#48](https://github.com/autumngarage/touchstone/pull/48).
 
 ## Cortex
