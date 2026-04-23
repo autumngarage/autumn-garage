@@ -21,12 +21,13 @@ Spec: 0.3.1
 
 # Project State — Autumn Garage
 
-> Coordination repo for the Touchstone/Cortex/Sentinel/**Conductor** quartet + autumn-mail dogfood project. **2026-04-21 evening:** Stage 1+2 of the Touchstone × Conductor integration plan shipped to PRs in one session.
-> - **Conductor v0.2** ([PR #5](https://github.com/autumngarage/conductor/pull/5)) — shell-out `exec` subcommand, capability declarations (quality_tier, supported_tools/sandboxes, effort_to_thinking, cost + latency), router gets prefer/effort/tools/sandbox/exclude axes, session-local health tracking, explainable RouteDecision with full ranking, graceful one-hop fallback on 5xx/429/timeout, concierge init walking each provider 1-by-1, config validation + inspector + `conductor route` dry-run. 137 tests (+54 new).
-> - **Touchstone v2.0** ([PR #54](https://github.com/autumngarage/touchstone/pull/54)) — delete 4 per-provider bash adapters, collapse to single `conductor` adapter (~60 lines). Net -448 lines. Legacy `[review].reviewers = [...]` configs auto-migrate with a one-time hint. `TOUCHSTONE_REVIEWER` deprecated in favor of `TOUCHSTONE_CONDUCTOR_WITH`. `[review.local]` retired. `[review.assist]` peer-review disabled in 2.0, returns in 2.1 via `--exclude`. All 11 test scripts green, shellcheck clean.
-> - **Trio became quartet** and now the quartet is collapsing: post-merge, all LLM access in the garage flows through Conductor. Sentinel migration is Stage 5 (blocked on Stage 3 HTTP tool-use loop, ~4 weeks separate plan).
+> Coordination repo for the Touchstone/Cortex/Sentinel/**Conductor** quartet + autumn-mail dogfood project. **2026-04-23 evening:** Touchstone × Conductor integration **fully shipped** — both PRs merged, both releases tagged, both deployed.
+> - **Touchstone v2.0.0** ([release](https://github.com/autumngarage/touchstone/releases/tag/v2.0.0)) — squash-merged from PR #54 (commit 2ab5600). Brew formula updated; `brew upgrade autumngarage/touchstone/touchstone` picks it up. Delete 4 per-provider bash adapters → single `conductor` adapter (-448 net lines). New commands: `touchstone migrate-review-config`, `touchstone review --dry-run`. New `principles/git-workflow.md` section on commit-and-push frequency. 12 test scripts green.
+> - **Conductor v0.2.1** ([release](https://github.com/autumngarage/conductor/releases/tag/v0.2.1)) — squash-merged from PR #5 (commit 0200332). Includes v0.2 (`exec` subcommand, capability declarations, prefer/effort axes, route preview, concierge init, graceful fallback) + v0.2.1 (session_id capture, `--resume` flag, ollama-model-pulled doctor warning). 159 tests. **Brew tap not yet created** — install via `uv tool install --from git+https://github.com/autumngarage/conductor@v0.2.1 conductor`.
+> - **Autumn-mail migration** ([PR #7](https://github.com/autumngarage/autumn-mail/pull/7)) — opened with the result of `touchstone migrate-review-config` against autumn-mail's `.codex-review.toml`. Awaiting merge.
+> - **Trio became quartet, then quartet collapsed**: all LLM access in the garage flows through Conductor today. Sentinel migration (Stage 5) is the last open piece — blocked on Conductor v0.3 HTTP tool-use loop (~4 weeks, separate plan).
 >
-> Historical: 2026-04-20/21 morning build-out shipped Conductor v0.1.0 — 4 PRs (scaffold + Kimi / claude-codex-gemini-ollama / auto-router / list-smoke-doctor-init). LiteLLM evaluated and rejected. 2026-04-18 shipped 7 tool releases + R1–R4 + T1.6 + R5 + V1/V2. 2026-04-19: cycle 4 planner-grounding fixes → sentinel#81 + cortex#22. Cycle 5 pivoted to cortex installability → cortex#24 (v0.2.2 init scan-and-absorb) + cortex#26 (v0.2.3 polish).
+> Historical: 2026-04-22/23 was the UX hardening + release session: 6 dogfood-driven UX gaps closed (config shape, route-log, cold-onboard, local-reviewer translate, cache key, dry-run preview), `touchstone migrate-review-config` shipped, latent `set -u` cache-key bug surfaced and fixed, codex JSON + session-id research-driven follow-ups landed. 2026-04-21: Conductor v0.2 + Touchstone v2.0 PRs opened. 2026-04-20/21 morning: Conductor v0.1.0 (4 PRs). 2026-04-18: 7 tool releases + R1–R4 + T1.6 + R5 + V1/V2.
 
 ## P0 — Conductor v0.1.0 shipped ✅ (2026-04-21)
 
@@ -37,7 +38,7 @@ Spec: 0.3.1
 - Org-level GitHub secrets `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` on `autumngarage`, `visibility: all`. CI validate workflow runs mocked tests every push/PR; live-smoke via `workflow_dispatch`.
 - See `journal/2026-04-21-conductor-v0.1-shipped.md` for the full story.
 
-**Trio is now a quartet:** Touchstone 1.2.3 · Cortex 0.2.3 · Sentinel 0.3.4 · **Conductor 0.1.0**.
+**Quartet, post-collapse:** **Touchstone 2.0.0** · Cortex 0.2.3 · Sentinel 0.3.4 · **Conductor 0.2.1**.
 
 **Next Conductor workstreams (deferred to future plans):** Sentinel migration (replace `src/sentinel/providers/*.py` with `conductor call` shell-outs), Touchstone migration (reviewer cascade gains `auto` entry), Cortex Phase C synthesis backends, brew tap.
 
@@ -103,15 +104,21 @@ All in `TODOs.md`.
 
 ---
 
-## Installed tool versions (2026-04-18 end-of-day)
+## Installed tool versions (2026-04-23 end-of-day)
 
-- **Touchstone 1.2.2** — [swift scaffold + interactive wizard + sibling detection + R5 ordering + R5.3 shellcheck CI + setup.sh per-profile dev-tools]
-- **Cortex 0.2.0** — [plans template + .cortex/README.md + init interactive + sibling detection + hand-authored-placeholder stubs]
-- **Sentinel 0.3.4** — [.sentinel/.gitignore + init wizard + reviewer=codex default + sibling detection + T1.6 Cortex journal writes + coder timeout config + built-in registry + rejection memory + R5.2 gitignore fix + graceful missing-tool verifier + verifications.jsonl audit]
+- **Touchstone 2.0.0** — [conductor adapter + migrate-review-config + review --dry-run + commit-frequency principle + 2.0-shape config writer + route-log in transcript + cold-onboard messages + cache key includes conductor knobs]
+- **Conductor 0.2.1** — [exec subcommand + capability declarations + prefer/effort/tools/sandbox axes + route preview + concierge init + graceful fallback + session_id capture + --resume + ollama model-pulled doctor warning]
+- **Cortex 0.2.3** — [plans template + init interactive + sibling detection + scan-and-absorb + unscoped-LLM-constraint warning]
+- **Sentinel 0.3.4** — [reviewer=codex default + sibling detection + T1.6 Cortex journal writes + coder timeout config + built-in registry + rejection memory + graceful missing-tool verifier + verifications.jsonl audit]
 
-## Shipped releases today
+## Shipped releases today (2026-04-23)
 
-touchstone: 1.1.0 → 1.2.0 → 1.2.1 → 1.2.2 · cortex: 0.1.0 → 0.2.0 · sentinel: 0.2.0 → 0.3.0 → 0.3.1 → 0.3.2 → 0.3.3 → 0.3.4. ~20 PRs total across the three repos, all via parallel agent dispatch + Codex auto-merge-review.
+- **touchstone v2.0.0** ([release](https://github.com/autumngarage/touchstone/releases/tag/v2.0.0), brew formula updated)
+- **conductor v0.2.1** ([release](https://github.com/autumngarage/conductor/releases/tag/v0.2.1), brew tap pending creation)
+
+## Earlier release history
+
+touchstone: 1.1.0 → 1.2.0 → 1.2.1 → 1.2.2 → 1.2.3 → 2.0.0 · conductor: 0.1.0 → 0.2.1 · cortex: 0.1.0 → 0.2.0 → 0.2.2 → 0.2.3 · sentinel: 0.2.0 → 0.3.0 → 0.3.1 → 0.3.2 → 0.3.3 → 0.3.4.
 
 ## Open decisions
 
