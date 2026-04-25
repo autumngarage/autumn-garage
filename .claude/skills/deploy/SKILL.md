@@ -12,13 +12,36 @@ The four tools (conductor, cortex, sentinel, touchstone) each have a paired Home
 | Tool | Local clone | Versioning | Release command |
 |---|---|---|---|
 | conductor | `~/Repos/conductor` | `hatch-vcs` (derived from tag) | `git tag vX.Y.Z && git push origin vX.Y.Z && gh release create vX.Y.Z --generate-notes` |
-| cortex | `~/Repos/cortex` | manual bumps in `src/cortex/__init__.py` + `pyproject.toml`, then tag | bump both files, commit `chore: release vX.Y.Z`, push, then tag + push tag + `gh release create` |
+| cortex | `~/Repos/cortex` | manual bumps in `src/cortex/__init__.py` + `pyproject.toml` (+ `uv.lock` regen + `README.md` version refs), shipped via PR | bump all files on a release branch, push, open PR with `scripts/open-pr.sh --auto-merge`, then tag the merge commit + `gh release create` (cortex blocks direct commits to `main`) |
 | sentinel | `~/Repos/sentinel` | `hatch-vcs` | same as conductor |
 | touchstone | `~/Repos/touchstone` | `VERSION` file bumped by helper | `bin/touchstone release --patch \| --minor \| --major` (this helper does VERSION bump + commit + tag + push + `gh release create` in one call — do NOT run the steps separately) |
 
 Touchstone's helper exists; do not duplicate its work. Conductor/cortex/sentinel get tagged manually.
 
 ## Run order
+
+### 0. Pre-flight: cross-repo visibility + Actions access (do this once, before surveying)
+
+The release-published event in each tool repo calls `autumn-garage/.github/workflows/homebrew-bump.yml@v1` as a reusable workflow. GitHub blocks the call silently if either of these isn't right, leaving GitHub Releases in place but skipping the tap bump.
+
+```bash
+# 1. autumn-garage must allow its workflows to be called from the org's repos
+gh api repos/autumngarage/autumn-garage/actions/permissions/access --jq .access_level
+# expected: "organization" (or "all"). If "none", run:
+#   gh api -X PUT repos/autumngarage/autumn-garage/actions/permissions/access -f access_level=organization
+
+# 2. Visibility constraint: a public consumer cannot call a private source workflow.
+#    All five repos (autumn-garage + the four tools) must be at the same visibility,
+#    OR autumn-garage must be at least as public as the tools.
+GARAGE_VIS=$(gh repo view autumngarage/autumn-garage --json visibility -q .visibility)
+for t in conductor cortex sentinel touchstone; do
+  TOOL_VIS=$(gh repo view autumngarage/$t --json visibility -q .visibility)
+  echo "$t: tool=$TOOL_VIS  garage=$GARAGE_VIS"
+done
+# If any tool is PUBLIC while garage is PRIVATE → chain will break. Surface and stop.
+```
+
+If either check fails, surface it to the user and stop. Don't try to "fix" by toggling visibility — that's a user decision.
 
 ### 1. Survey (do this first, before any destructive action)
 
@@ -77,18 +100,35 @@ git push origin vX.Y.Z
 gh release create vX.Y.Z --generate-notes
 ```
 
-For cortex (manual version bump first):
+For cortex (PR-based — direct commits to `main` are blocked by a pre-commit hook):
 
 ```bash
 cd ~/Repos/cortex
-# Edit src/cortex/__init__.py (__version__ = "X.Y.Z") and pyproject.toml ([project] version = "X.Y.Z")
-git add src/cortex/__init__.py pyproject.toml
-git commit -m "chore: release vX.Y.Z"
-git push origin main
-git tag vX.Y.Z
+git checkout -b chore/vX.Y.Z-release
+
+# Bump version in all four places — Codex review will block if README is stale.
+# - src/cortex/__init__.py: __version__ = "X.Y.Z"
+# - pyproject.toml:         version = "X.Y.Z"
+# - README.md:              every "v<prev>" / "currently on v<prev>" version ref
+# - uv.lock:                regenerate with `uv lock`
+uv lock
+git add src/cortex/__init__.py pyproject.toml README.md uv.lock
+git commit -m "chore: vX.Y.Z release prep — bump version"
+git push -u origin chore/vX.Y.Z-release
+
+# Auto-merging PR — Codex reviews; merges on clean.
+scripts/open-pr.sh --auto-merge \
+  --title "chore: vX.Y.Z release prep — bump version" \
+  --body "Bumps version to X.Y.Z to ship pending main commits."
+
+# After merge, tag the resulting commit on main (NOT the branch HEAD — the PR squash-merges).
+git fetch origin main
+git tag vX.Y.Z origin/main
 git push origin vX.Y.Z
 gh release create vX.Y.Z --generate-notes
 ```
+
+If Codex blocks on stale README version refs, fix them on the same branch and push again; `--auto-merge` re-runs.
 
 For touchstone:
 
@@ -144,5 +184,7 @@ This re-fires the homebrew-bump workflow for an existing tag (idempotent — if 
 - `HOMEBREW_TAP_PAT` repo secret on each of the four tool repos
 - `.github/workflows/release.yml` wrapper present in each tool repo, pinned `@v1` to autumn-garage's shared workflow
 - `autumn-garage` tag `v1` exists, pointing at `.github/workflows/homebrew-bump.yml`
+- `autumn-garage` Actions reusable-workflow access set to `organization` (see step 0)
+- `autumn-garage` visibility ≥ each tool repo's visibility (a public tool cannot call a private workflow source — see step 0)
 
 If any of these are missing, the auto-bump chain breaks silently. Surface that as an error rather than proceeding.
