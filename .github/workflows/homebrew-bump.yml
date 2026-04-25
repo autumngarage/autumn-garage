@@ -1,0 +1,74 @@
+# Reusable workflow: Homebrew tap formula bump
+#
+# Single source of truth for "tag a release in a tool repo → bump the
+# corresponding homebrew-<tool> Formula's url + sha256." Called from each
+# tool's own .github/workflows/release.yml as:
+#
+#   jobs:
+#     bump-tap:
+#       uses: autumngarage/autumn-garage/.github/workflows/homebrew-bump.yml@v1
+#       with:
+#         formula-name: <tool-name>
+#         tap-repo: autumngarage/homebrew-<tool-name>
+#         tag-name: ${{ inputs.tag_name || github.event.release.tag_name }}
+#       secrets:
+#         HOMEBREW_TAP_PAT: ${{ secrets.HOMEBREW_TAP_PAT }}
+#
+# The caller is responsible for the trigger event (release.published is
+# the recommended default) and any prerelease gating — this workflow
+# stays narrow and only does the bump.
+#
+# Versioning: tag this repo `v1` for the current contract. Breaking
+# input/secret changes bump to `v2`; non-breaking changes update `v1`
+# in place (consumers pinning `@v1` track the floating major).
+
+name: Homebrew tap formula bump (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      formula-name:
+        description: "Formula name without .rb, e.g. 'conductor'"
+        required: true
+        type: string
+      tap-repo:
+        description: "Tap repo slug, e.g. 'autumngarage/homebrew-conductor'"
+        required: true
+        type: string
+      tag-name:
+        description: "Tag to bump the formula to, e.g. 'v0.3.4'"
+        required: true
+        type: string
+      formula-path:
+        description: "Override the formula path (default: Formula/<formula-name>.rb)"
+        required: false
+        type: string
+        default: ""
+    secrets:
+      HOMEBREW_TAP_PAT:
+        description: "PAT with `repo` scope on the tap repo (commits the bump)"
+        required: true
+
+jobs:
+  bump-tap:
+    runs-on: ubuntu-latest
+    steps:
+      # Pinned by SHA, not floating tag. Same pin cli/cli uses for `gh`.
+      # Bump deliberately — never let the release path consume an unpinned
+      # third-party action.
+      - name: Bump formula
+        uses: mislav/bump-homebrew-formula-action@ccf2332299a883f6af50a1d2d41e5df7904dd769  # v4.1
+        with:
+          formula-name: ${{ inputs.formula-name }}
+          formula-path: ${{ inputs.formula-path != '' && inputs.formula-path || format('Formula/{0}.rb', inputs.formula-name) }}
+          homebrew-tap: ${{ inputs.tap-repo }}
+          base-branch: main
+          create-pullrequest: false
+          tag-name: ${{ inputs.tag-name }}
+          download-url: https://github.com/${{ github.repository }}/archive/refs/tags/${{ inputs.tag-name }}.tar.gz
+          commit-message: |
+            ${{ inputs.formula-name }} {{version}}
+
+            Released by GitHub Actions from ${{ github.repository }}@${{ github.sha }}.
+        env:
+          COMMITTER_TOKEN: ${{ secrets.HOMEBREW_TAP_PAT }}
