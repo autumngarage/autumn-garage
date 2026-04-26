@@ -1,11 +1,14 @@
 ---
-Status: Active
+Status: Active (tonight's wave shipped 2026-04-26 evening; SF-4 + SF-5 daylight)
 Owner: autumn-garage (cross-repo coordination)
 Parent: `.cortex/plans/full-vanguard-outrider-separation.md`
 Created: 2026-04-26
+Updated: 2026-04-26 evening (SF-1/2/3/6/7/8 shipped; allow-list 167 → 63; remaining surface is B.2-blocked)
 ---
 
 # Separation finish line
+
+> **Status as of 2026-04-26 end-of-wave:** SF-1, SF-2 (retry), SF-3, SF-6, SF-7, SF-8 all shipped through codex review tonight. AST cluster-boundary allow-list dropped from ~167 entries to 63. SF-2 retry confirmed the headline finding: every remaining entry is genuinely B.2-gated or a documented carve-out (exit-reasoning, SharedInfra, outrider.api.signals, outrider.api.server.app). There are no more "easy" deletions. SF-4 (B.2 Railway DB) and SF-5 (drop the dep) are the only remaining stages — both daylight work, detailed in `vanguard-db-ownership.md`. Total expected wall-time from Railway DB provisioning to true separation: ~3-4 days execution + 2-3 days soak.
 
 > The minimum remaining work to declare vanguard and outrider fully decoupled. Once done, both teams work independently and only meet at outrider's HTTP API. Anything not on this critical path is post-separation work and lives on the parking lot.
 
