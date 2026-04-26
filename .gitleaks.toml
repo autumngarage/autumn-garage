@@ -1,0 +1,65 @@
+title = "autumn-garage gitleaks config"
+
+# Extend the default ruleset shipped with gitleaks (AWS keys, GitHub tokens,
+# Slack tokens, etc.) — see https://github.com/gitleaks/gitleaks/blob/master/config/gitleaks.toml.
+# Custom rules below close gaps the defaults don't cover. The original incident
+# (cutover-runbook.md, commit 2fbf3dd) was a Postgres URI with an embedded
+# password, which the default ruleset does NOT detect.
+[extend]
+useDefault = true
+
+# ── Custom rule: database connection URIs with embedded credentials ────────
+#
+# Catches `<scheme>://<user>:<password>@<host>` for the database protocols we
+# actually use. Deliberately narrow on scheme so we don't false-positive on
+# generic URLs that legitimately carry user:token (e.g. webhook URLs).
+[[rules]]
+id = "db-uri-with-password"
+description = "Database connection URI with embedded password"
+regex = '''(?i)(postgres(?:ql)?|mysql|mongodb(?:\+srv)?|redis)://[^\s:/@]+:[^\s/@]+@[^\s/]+'''
+tags = ["database", "credentials", "uri"]
+
+[[rules]]
+id = "pgpassword-env"
+description = "PGPASSWORD set inline on a command"
+regex = '''(?i)\bPGPASSWORD=[A-Za-z0-9+/=_-]{8,}\b'''
+tags = ["postgres", "credentials", "env"]
+
+# ── Allowlist ──────────────────────────────────────────────────────────────
+# Documentation placeholders — `password`, `<NEW_PW>`, `${{Var}}` etc. — must
+# be allowed so docs explaining the right way to handle credentials don't
+# trigger the rule.
+[allowlist]
+description = "Documentation placeholders, template refs, agent worktrees, false-positive stopwords"
+
+# Path allowlist — Claude Code agent worktrees are gitignored scratch space.
+# They're never committed, but `gitleaks detect` (no-git mode) walks the
+# filesystem. Skip them so the local scan is clean.
+paths = [
+  '''^\.claude/worktrees/''',
+]
+
+# Stopwords — exact substrings to treat as non-secret matches. These are
+# known false positives from the default generic-api-key high-entropy rule
+# matching ordinary identifiers in prose. Add to this list as new stopwords
+# surface; do not loosen the rules themselves.
+stopwords = [
+  "observability/SLA",
+  "typical_p50_ms",
+]
+
+# Test allowlist regexes against the full match (default is the captured
+# Secret group, which for db-uri-with-password is just the scheme — too
+# narrow to detect placeholder syntax inside the URL).
+regexTarget = "match"
+
+regexes = [
+  # Railway template ref syntax: ${{ServiceName.VAR}}
+  '''\$\{\{[^}]+\}\}''',
+  # Obvious placeholder values (case-insensitive)
+  '''(?i):(password|placeholder|example|changeme|your[_-]?password|new[_-]?pw|new[_-]?password|literal[_-]?password|secret|xxx+|fake|dummy)@''',
+  # Angle-bracketed placeholders e.g. <NEW_PW>, <password>, <REDACTED>, <LITERAL_PASSWORD>
+  '''<[A-Za-z][A-Za-z0-9_]*>@''',
+  # Bracketed placeholders like [REDACTED]
+  '''\[[A-Z][A-Z0-9_]*\]@''',
+]
