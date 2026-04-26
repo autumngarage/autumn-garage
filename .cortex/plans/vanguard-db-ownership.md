@@ -1,18 +1,19 @@
 ---
-Status: Proposed (activates when user provisions Railway DB for vanguard)
+Status: Active (B.2.1 foundation in flight; cutover stages B.2.2/B.2.3 user-action)
 Owner: vanguard
 Parent: `.cortex/plans/separation-finish-line.md` SF-4
 Created: 2026-04-26
+Updated: 2026-04-26 evening (Postgres-B4xF provisioned + DATABASE_URL_VANGUARD wired; B.2.1 foundation PR shipping tonight)
 Workstream-id: B.2
 ---
 
 # Vanguard owns its execution-side database
 
-> The last code-level coupling between vanguard and outrider: vanguard's runtime today reads and writes outrider's Postgres directly through `outrider._platform.db_queries`. This plan migrates those write paths into a vanguard-owned DB so the `outrider` Python dep can finally drop. After this lands, vanguard and outrider share zero process-state.
+> The last code-level coupling between vanguard and outrider: vanguard's runtime today reads and writes outrider's Postgres directly through `outrider.platform.db_queries`. This plan migrates those write paths into a vanguard-owned DB so the `outrider` Python dep can finally drop. After this lands, vanguard and outrider share zero process-state.
 
 ## Status
 
-**Proposed.** Activates after the user provisions a Postgres instance on Railway under the vanguard service (or sets `DATABASE_URL_VANGUARD` to a managed Postgres elsewhere). Until then, the rest of the separation finish-line plan (SF-1, SF-2, SF-3, SF-6, SF-7) ships independently.
+**Active.** Foundation work in flight tonight (B.2.1). Postgres-B4xF (PG18) was already provisioned in the `daring-strength` Railway project. `DATABASE_URL_VANGUARD` env var is set on the vanguard service, resolving to Postgres-B4xF via reference variable. Currently no code reads it — the var is dormant until the foundation PR (B.2.1) ships and the cutover PRs (B.2.2 / B.2.3) flip the migration flags. Cutover stages remain user-action because they change live runtime behavior.
 
 ## Why
 
@@ -45,23 +46,34 @@ The following stay in outrider's DB and are reachable only via HTTP from vanguar
 
 Each is a single PR. Sub-stages run sequentially because they touch the same DB sessions.
 
-### B.2.1 — Provision + dual-write infrastructure
+### B.2.1 — Foundation (in flight tonight)
 
-User-action prerequisite: Railway DB instance for vanguard with `DATABASE_URL_VANGUARD` set on vanguard's Railway service (and on local `.env.local` for the local dev path).
+Prerequisites already satisfied:
+- ✅ Postgres-B4xF (PG18) provisioned in `daring-strength` Railway project
+- ✅ `DATABASE_URL_VANGUARD` env var set on vanguard service (reference variable to Postgres-B4xF)
+- ✅ Postgres-B4xF confirmed empty
 
-Code work:
-1. Vendor `outrider/_platform/db.py` → `vanguard/_platform/db.py`. The new module's `session_scope()` reads `DATABASE_URL_VANGUARD` instead of `DATABASE_URL`. Keep the SQLAlchemy table definitions for the vanguard-owned tables; drop the research-internal ones from the vendored copy.
-2. Run vanguard's migrations against the new DB to create the table schema. (Vanguard adopts Alembic at this stage if it doesn't already have it; copy the relevant migration files from outrider for the owned tables.)
-3. Vendor the relevant write helpers from `outrider/_platform/db_queries.py` → `vanguard/_platform/db_queries.py`. Keep only the helpers vanguard actually calls (audit via grep against runner.py + garrison/*.py). Drop everything research-side.
-4. Switch vanguard's call sites to import from `vanguard._platform.db` and `vanguard._platform.db_queries`. Add a runtime feature flag `VANGUARD_DUAL_WRITE_DB=1` (default ON during transition) that writes to BOTH the vanguard DB and outrider's DB on every operation. This guarantees zero data loss while validating the new path.
-5. Acceptance: vanguard starts up, both DBs populate identically over a 24h soak. Add a daily reconciliation script that compares row counts + checksum of the latest 1000 rows per table.
+Code work (single PR, dormant — no runtime behavior change):
+1. Vendor `outrider/platform/db.py` → `vanguard/_platform/db.py`. `session_scope()` reads `DATABASE_URL_VANGUARD` instead of `DATABASE_URL`. Keep SQLAlchemy table definitions only for vanguard-owned tables: `trades`, `cycles`, `risk_state`, `system_heartbeats`, `events_outbox`. Drop every research-internal table.
+2. Vendor `outrider/platform/db_queries.py` → `vanguard/_platform/db_queries.py`, scoped to the helpers vanguard actually imports (~18 functions).
+3. Apply schema to Postgres-B4xF via psql. Save the DDL as `vanguard/_platform/migrations/0001_initial_schema.sql` for reproducibility.
+4. **DO NOT** change any runtime imports. Vanguard's runner.py + garrison/ + transport/ + vault/ keep importing from `outrider.platform.db_queries` UNCHANGED. The new vanguard module exists and works but is dormant until B.2.2.
+5. Acceptance: existing 627-test suite stays green; new smoke tests verify the vendored module imports + connects.
 
-### B.2.2 — Cutover to vanguard-only writes
+The foundation is dormant code. No runtime change. AST cluster-boundary allow-list stays at 63.
 
-After 1-2 days of clean dual-write soak:
-1. Flip `VANGUARD_DUAL_WRITE_DB=0` on Railway. Vanguard now writes only to its own DB.
-2. Outrider stops reading vanguard-owned tables. Anywhere in outrider that referenced `outbox_events` etc. is either redirected to vanguard's HTTP endpoint (if it's a research-feedback path) or deleted.
-3. Run for 24h. If anomalies surface, flip the flag back ON.
+### B.2.2 — Activate dual-write + cutover (USER ACTION, daylight)
+
+Sub-stage A — dual-write soak:
+1. New PR adds two flags: `VANGUARD_OWN_DB_WRITES` (default 0) and `VANGUARD_LEGACY_DB_WRITES` (default 1). Wraps every vanguard write site so it can hit one or both DBs.
+2. Switch vanguard's runtime imports from `outrider.platform.db_queries` → `vanguard._platform.db_queries_dual` (the wrapper). At default flag values, behavior is identical to today.
+3. Set `VANGUARD_OWN_DB_WRITES=1` on Railway (keep `VANGUARD_LEGACY_DB_WRITES=1`). Vanguard now writes to BOTH DBs on every operation.
+4. 24-48h soak. Add a daily reconciliation script that compares row counts + checksum of the latest 1000 rows per table across both DBs.
+
+Sub-stage B — cutover:
+1. After clean soak, set `VANGUARD_LEGACY_DB_WRITES=0`. Vanguard writes only to its own DB.
+2. 24h validation soak.
+3. If anomalies surface, flip back ON. If clean, proceed to B.2.3.
 
 ### B.2.3 — Drop the imports + the dep
 
