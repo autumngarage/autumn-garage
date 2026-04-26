@@ -1,11 +1,12 @@
 ---
-Status: proposed
+Status: active
 Written: 2026-04-25
 Author: claude-code (drafted at human direction — "i want to do a full untangling where each repo is in a fantastic place on their own only communicating cleanly through their api")
 Goal-hash: (recompute with cortex doctor)
 Updated-by:
   - 2026-04-25T21:00 claude-code (created)
   - 2026-04-25T21:45 claude-code (rewrote per human reframing — "the API bridge carries the data; both sides run their own loops on top of that data". Added architecture diagram, sharpened operational-state strategy from "vanguard implements its own near-clone" to "vanguard builds minimum-viable trade-execution platform", filed vanguard-execution-flywheel as a deferred follow-up plan rather than treating it as part of this work.)
+  - 2026-04-25T22:00 claude-code (Status proposed → active — human green-light "let's fucking go brother we got this!!!!". Wave 1 of execution kicked off in parallel: A.2.1 reverse leak fix + B.4 vendor utilities + B.5a contract data-type mirrors + Explore audit of outrider scheduler for A.1 design.)
 Cites: outrider/docs/CONTRACT.md, outrider/docs/SPLIT_INVENTORY.md § 1, outrider/docs/THESIS.md § Invariants, autumn-garage/.cortex/state.md
 ---
 
