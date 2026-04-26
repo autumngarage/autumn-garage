@@ -20,10 +20,17 @@ Created: 2026-04-26
 - [ ] PR with the import-flip ready in branch (vanguard runtime imports flip from `outrider.platform.db*` → `vanguard._platform.db*`)
 - [ ] Postgres-B4xF schema applied (✅ done in B.2.1 PR #34)
 
-## Connection strings (already known)
+## Connection strings
 
-- Shared Postgres (source): `postgresql://postgres:bBlmLQWDBsrwxCCNOkVAGjAJwwrmYiFs@ballast.proxy.rlwy.net:51204/railway`
-- Postgres-B4xF (target): `postgresql://postgres:RRbXOOrbkKcleHXigGmvgQgFVWeGlXfZ@yamabiko.proxy.rlwy.net:25354/railway`
+> **Never paste live credentials here.** Pull connection strings from Railway at run-time:
+>
+> ```bash
+> SHARED_URL=$(railway variables --service Postgres --kv | grep '^DATABASE_PUBLIC_URL=' | cut -d= -f2-)
+> B4XF_URL=$(railway variables --service Postgres-B4xF --kv | grep '^DATABASE_PUBLIC_URL=' | cut -d= -f2-)
+> ```
+>
+> - Shared Postgres (source): `Postgres.DATABASE_PUBLIC_URL` → `ballast.proxy.rlwy.net:51204/railway`
+> - Postgres-B4xF (target): `Postgres-B4xF.DATABASE_PUBLIC_URL` → `yamabiko.proxy.rlwy.net:25354/railway`
 
 ## Tables to migrate
 
@@ -45,8 +52,7 @@ Outbox events that are still pending (not yet delivered to outrider via HTTP) ne
 
 ```bash
 # Connect to shared (source) and check pending outbox
-PGPASSWORD=bBlmLQWDBsrwxCCNOkVAGjAJwwrmYiFs psql \
-  -h ballast.proxy.rlwy.net -p 51204 -U postgres -d railway \
+psql "$SHARED_URL" \
   -c "SELECT COUNT(*) FROM events_outbox WHERE delivered_at IS NULL;"
 ```
 
@@ -55,9 +61,7 @@ If non-zero: trigger vanguard's outbox-relay loop to flush. Check Railway logs t
 ### Step 2 — pre-deploy verify Postgres-B4xF schema
 
 ```bash
-PGPASSWORD=RRbXOOrbkKcleHXigGmvgQgFVWeGlXfZ psql \
-  -h yamabiko.proxy.rlwy.net -p 25354 -U postgres -d railway \
-  -c "\dt"
+psql "$B4XF_URL" -c "\dt"
 # Expect 5 tables: cycles, events_outbox, risk_state, system_heartbeats, trades
 ```
 
@@ -77,8 +81,7 @@ Confirm via Railway dashboard or `railway status` that the service is stopped.
 
 ```bash
 # Dump vanguard-owned tables from shared
-PGPASSWORD=bBlmLQWDBsrwxCCNOkVAGjAJwwrmYiFs pg_dump \
-  -h ballast.proxy.rlwy.net -p 51204 -U postgres -d railway \
+pg_dump "$SHARED_URL" \
   --table=trades \
   --table=cycles \
   --table=risk_state \
@@ -89,9 +92,7 @@ PGPASSWORD=bBlmLQWDBsrwxCCNOkVAGjAJwwrmYiFs pg_dump \
   > /tmp/vanguard-data-$(date +%Y%m%d-%H%M%S).sql
 
 # Restore into Postgres-B4xF
-PGPASSWORD=RRbXOOrbkKcleHXigGmvgQgFVWeGlXfZ psql \
-  -h yamabiko.proxy.rlwy.net -p 25354 -U postgres -d railway \
-  < /tmp/vanguard-data-<TIMESTAMP>.sql
+psql "$B4XF_URL" < /tmp/vanguard-data-<TIMESTAMP>.sql
 ```
 
 For `cycles` + `system_heartbeats` (last-N-days windows): use `--where` filter on the `pg_dump`. Or dump full + delete old rows post-restore. Decide at run-time based on row counts.
@@ -100,8 +101,7 @@ For `cycles` + `system_heartbeats` (last-N-days windows): use `--where` filter o
 
 ```bash
 # Counts should match dump
-PGPASSWORD=RRbXOOrbkKcleHXigGmvgQgFVWeGlXfZ psql \
-  -h yamabiko.proxy.rlwy.net -p 25354 -U postgres -d railway \
+psql "$B4XF_URL" \
   -c "SELECT 'trades' AS t, COUNT(*) FROM trades
       UNION ALL SELECT 'cycles', COUNT(*) FROM cycles
       UNION ALL SELECT 'risk_state', COUNT(*) FROM risk_state
@@ -113,8 +113,7 @@ PGPASSWORD=RRbXOOrbkKcleHXigGmvgQgFVWeGlXfZ psql \
 Compare against shared:
 
 ```bash
-PGPASSWORD=bBlmLQWDBsrwxCCNOkVAGjAJwwrmYiFs psql \
-  -h ballast.proxy.rlwy.net -p 51204 -U postgres -d railway \
+psql "$SHARED_URL" \
   -c "SELECT 'trades' AS t, COUNT(*) FROM trades
       UNION ALL SELECT 'cycles', COUNT(*) FROM cycles
       UNION ALL SELECT 'risk_state', COUNT(*) FROM risk_state
