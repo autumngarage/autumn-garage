@@ -194,20 +194,17 @@ After Stage 6 ships and vanguard runs cleanly for ~7 days:
 4. **Master plan** (`full-vanguard-outrider-separation.md`): flip Status to `shipped`. Add final "Updated-by" entry citing this plan.
 5. **Journal entry:** end-state declaration. Both repos independent. Customer #2 onboarding now becomes a real workstream.
 
-## Decision points for the operator
+## Decision points — LOCKED 2026-04-26 evening
 
-Three choices the user must make, in order:
+Operator principle: **"intelligence stays in outrider, trading goes in vanguard, no redundancy. elegance."**
 
-1. **Stage 5 strategy: α (dual-write) vs β (stop-the-world).**
-   Recommendation: β. Lower-cost in code + time. Brief outage acceptable.
+| Decision | Choice | Reason |
+|---|---|---|
+| Stage 5 strategy | **β stop-the-world cutover** | Dual-write IS redundancy by definition. β cheapest in code + calendar time. |
+| Stage 4 exit-reasoning home | **HTTP endpoint on outrider** | LLM reasoning is intelligence — stays in outrider. Vanguard calls the endpoint and decides whether to act on the reasoning. Same shape as the proposal contract. |
+| `agent_registry.instantiate_agent` | **drop** | Instantiating outrider agent classes in vanguard's process violates both "no redundancy" and "intelligence stays in outrider." Agent metadata on the proposal is sufficient for trade attribution. |
 
-2. **Stage 4 exit-reasoning home: vanguard-side LLM vs outrider HTTP endpoint.**
-   Recommendation: vanguard-side. Architectural cleanest; vanguard already speaks Conductor.
-
-3. **`agent_registry.instantiate_agent` — vendor vs drop.**
-   Recommendation: drop. Agent metadata is on the proposal; instantiation is research-cluster runtime, not vanguard's concern.
-
-Each is a 5-minute conversation. Once locked, the rest is execution.
+The earlier autumn-garage-AI recommendation for vanguard-side exit reasoning was wrong by the principle — overridden.
 
 ## Time + sequencing estimate
 
