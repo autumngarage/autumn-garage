@@ -7,22 +7,28 @@ Updated-by:
   - 2026-04-25T21:00 claude-code (created)
   - 2026-04-25T21:45 claude-code (rewrote per human reframing — "the API bridge carries the data; both sides run their own loops on top of that data". Added architecture diagram, sharpened operational-state strategy from "vanguard implements its own near-clone" to "vanguard builds minimum-viable trade-execution platform", filed vanguard-execution-flywheel as a deferred follow-up plan rather than treating it as part of this work.)
   - 2026-04-25T22:00 claude-code (Status proposed → active — human green-light "let's fucking go brother we got this!!!!". Wave 1 of execution kicked off in parallel: A.2.1 reverse leak fix + B.4 vendor utilities + B.5a contract data-type mirrors + Explore audit of outrider scheduler for A.1 design.)
+  - 2026-04-25T23:30 claude-code (Major reframe per human direction — "outrider does research and passes a clean and elegant API with the goal of highlighting an opportunity for a trade. Vanguard takes that information and decides what to do with it." THE PROPOSAL IS THE PRODUCT. Outrider's API surface collapses to 4 endpoint families (proposals, outcomes, strategies, reference/fees as convenience). Internal analysis (vol_score, OQS, reasoning, Shapley, autolab) stays inside outrider's pipeline; vanguard imports of that machinery become deletions, not HTTP-switches. Proposal payload extends with insight-only fields (probability_ci, conviction, edge_vs_consensus, time_horizon, agent_consensus, event_shape) PLUS a `candidate_instruments` block exposing up to 3 expression channels per proposal: kalshi, polymarket, options. Each channel is optional; vanguard picks zero/one/multiple. Trading-profile endpoint (B.1.2) deemed wrong-shaped — vanguard owns its deployment config; flagged for deprecation. Stage B reframed as "outrider API hardening," Stage C as "vanguard adapts to consume new API." New deferred plans: polymarket-coverage, options-structuring, OutriderExecution premium product, trading-profile-endpoint-deprecation.)
 Cites: outrider/docs/CONTRACT.md, outrider/docs/SPLIT_INVENTORY.md § 1, outrider/docs/THESIS.md § Invariants, autumn-garage/.cortex/state.md
 ---
 
-# Full vanguard ↔ outrider separation — HTTP-only contract, no shared code
+# Full vanguard ↔ outrider separation — outrider as polished product, vanguard as canonical customer
 
-> **End-state: outrider is a self-contained product that exposes an HTTP API; vanguard is a self-contained customer of that API. Zero Python-level coupling in either direction. Reference data flows over HTTP. Every shared utility is either vendored independently or replaced with an API call. Vanguard becomes the canonical example of how a customer integrates against outrider — copyable shape for the next customer.**
+> **End-state: outrider is a self-contained intelligence product. Its API exposes proposals (the unique research output), reference data, and consumes outcomes — nothing else. Each proposal is a self-sufficient information bundle: edge, conviction, thesis, signal attribution, plus up to 3 candidate expression channels (kalshi, polymarket, options). Vanguard is one customer — it pulls proposals, picks expression(s), executes, posts outcomes. Zero Python-level coupling in either direction. Vanguard becomes the canonical example of how a customer integrates against outrider — copyable shape for customer #2.**
 
 ## Why (grounding)
 
-**The architectural shape is "API bridge carries the data; both products run their own loops on top of that data."**
+**Outrider's product is the proposal. Everything else is the kitchen.**
 
-- **Outrider's learning loop** consumes `TradeOutcome` events (from any customer) and updates *research* calibration: which agents predicted right, how source weights should reshuffle, whether to halt an agent. It learns about the proposals' edge.
-- **Vanguard's learning loop** is its own thing entirely — learning about *execution quality*. Things outrider can't see and shouldn't care about: paper-vs-live slippage, broker fill quality, exit-timing realization, KILL_SWITCH false-positive rate, "did I capture the proposal's edge or leak it on fills?" Different signals, different actions.
-- **The HTTP bridge** is the entire interface between them: `ResearchProposal` outbound from outrider, `TradeOutcome` inbound, plus reference-data pulls (fees, trading profile, strategy params, agent roster). Versioned, authed, identical shape to whatever the next paying customer will see.
+Outrider does research — collectors gather signals, domain agents produce probability estimates, council synthesizes, calibration tracks per-agent realization, autolab promotes/demotes models, flywheel learns from outcomes. ALL of that happens inside outrider's pipeline. The customer-facing API surfaces only the **final outputs** of that machinery, packaged as self-sufficient `ResearchProposal` objects.
 
-The implication: each product owns its own platform — own DB, own kill switch, own alerts, own healing, own heartbeat — scoped to its own concerns. Outrider's "kill switch" halts research output if calibration breaks. Vanguard's "kill switch" halts trading if fills go bad. Outrider's healing watches collector freshness. Vanguard's healing watches broker connection health. The shape is similar; the signals and actions are completely different.
+Vanguard is one customer. Its job: pull proposals, decide what to do with each (gate, size, route, hedge, monitor), report outcomes back. **The proposal is the only intelligence vanguard receives**; everything vanguard needs to make a trade decision is on the payload (or in slow-moving reference data fetched separately).
+
+This means:
+
+- **Outrider's API has 4 endpoint families** (`/v1/proposals`, `/v1/outcomes`, `/v1/strategies/{id}`, `/v1/reference/fees`) — that's the entire surface. Plus optional/future: `/v1/agents` (track records, v2), `/v1/intel/reasoning` (live LLM, if exit-time reasoning becomes a real product need).
+- **The proposal payload is rich and self-sufficient** — insight fields (`predicted_probability`, `ci`, `conviction`, `edge_vs_consensus`, `thesis`, `signal_attribution`, `agent_consensus`, `time_horizon`, `event_shape`) + `candidate_instruments` (up to 3 optional expression channels: kalshi, polymarket, options). Vanguard's gating + sizing decisions read from this payload; no per-proposal calls to outrider for vol_score / OQS / reasoning / etc. — those are internal analysis that already shaped the proposal's edge.
+- **Internal analysis stays internal.** `vol_score`, `compute_oqs`, `reason_deep`, `Flywheel.log_trade`, `ForensicReviewer`, `AgentCalibrationPipeline`, `PriceFeedManager` — outrider's machinery, untouched in outrider's codebase. Vanguard's redundant in-process imports of these get **deleted**, not HTTP-switched. The proposal already encodes their results.
+- **Each product owns its own platform** — own DB, own kill switch, own alerts, own healing, own heartbeat — scoped to its own concerns. Outrider's "kill switch" halts research output if calibration breaks. Vanguard's "kill switch" halts trading if fills go bad. Different signals, different actions.
 
 `outrider/docs/CONTRACT.md` codified this in spirit with the hard rule: *"Every call that crosses from the Research System into the Trading System (or any other consumer) goes through this API. Every outcome report that feeds back into the Research System's learning loops goes through this API. No exceptions, no backdoor DB reads, no direct in-process function imports across the boundary."*
 
@@ -118,6 +124,75 @@ The user's framing on 2026-04-25: *"these are two different apps."* Outrider is 
 3. **Each side has its own operational platform** scoped to its concerns. The shapes echo each other; the signals and actions are completely different.
 4. **Reference data flows over HTTP** with versioning, not Python imports. Outrider can rotate a fee schedule without forcing a vanguard redeploy.
 5. **Zero Python coupling.** No `pip install outrider` in vanguard's pyproject. No `from outrider` in vanguard's source. No `from vanguard` in outrider's source.
+
+### Outrider's API surface (the entire customer-facing product)
+
+| Endpoint | Purpose | Why it's outrider's |
+|----------|---------|---------------------|
+| `GET /v1/proposals` (+ `{id}`) | Stream of trade-opportunity intelligence | The product itself — outrider's research output |
+| `POST /v1/outcomes` | Customer reports back what happened | Outrider's flywheel learns from realization |
+| `GET /v1/strategies/{id}` | Sizing recommendations (Kelly, edge thresholds, exit profiles) | Autolab-tuned from calibration data — research output |
+| `GET /v1/reference/fees` | Per-venue fee schedules | Convenience: keeps outrider's edge calc and customer's P&L calc using the same numbers; not unique research IP |
+| `GET /v1/agents` *(v2/future)* | Agent track records | Customer-side filtering/weighting |
+| `POST /v1/intel/reasoning` *(open question)* | Live LLM intel for exit-time decisions | Only if exit-time reasoning is a real product need |
+
+**Endpoints that should NOT exist:**
+- `GET /v1/reference/trading-profile` (B.1.2 — wrong-shaped; vanguard owns its deployment config; flagged for deprecation)
+
+### The proposal payload (self-sufficient bundle)
+
+```
+ResearchProposal {
+  // Identity & versioning
+  proposal_id, event_id, generated_at, valid_until,
+  research_version, model_version,
+
+  // Source
+  agent_name,
+  agent_consensus: {agreeing_agents, disagreeing_agents, consensus_score},
+
+  // Event description (instrument-agnostic)
+  event_description,                 // "FOMC Dec 2026: 25bps cut?"
+  event_shape: "binary"|"continuous"|"discrete"|"sequential",
+  cohort_starts: [string],
+
+  // Probability output (the differentiated piece)
+  predicted_probability,             // outrider's point estimate
+  predicted_probability_ci: {low, high},
+  conviction,
+
+  // Edge (vs market consensus where outrider has visibility)
+  market_consensus_probability,
+  market_consensus_source,           // "kalshi:FED-DEC-25BP" | "fed_funds_futures_imply" | ...
+  edge_vs_consensus,
+  edge_tier,                         // "low"|"medium"|"high"
+
+  // Time horizon
+  time_horizon: {window_start, window_end, days_to_resolution},
+
+  // Why
+  thesis_summary,
+  thesis_long,
+  signal_attribution: [{source, weight, contribution}, ...],
+
+  // Linkage to sizing knobs
+  strategy_id,
+
+  // Candidate expression channels — up to 3, all optional
+  candidate_instruments: {
+    "kalshi":     null | { venue, ticker, side, market_price, edge_at_instrument, liquidity },
+    "polymarket": null | { venue, market_slug, side, market_price, edge_at_instrument, liquidity },
+    "options":    null | { venue, underlying, structure, legs, indicative_net_debit, payoff_shape, max_loss, liquidity }
+  }
+}
+```
+
+Vanguard's logic on receipt:
+
+1. Gate the insight (edge ≥ min, conviction ≥ min, cohort caps, KILL_SWITCH, etc.)
+2. Pick instrument(s) — one, multiple (hedge), or none
+3. Size + route + monitor
+4. POST outcome at every state change
 
 ### Repo shape after the work
 
@@ -252,7 +327,11 @@ Both run in CI as part of the core suite. **One PR each.**
 
 ## Follow-ups (deferred)
 
-- **Vanguard's own execution flywheel + autolab.** Vanguard currently has no learning loop of its own — it's been free-riding on outrider's flywheel/lorien/watchtower machinery for orchestration. Post-separation, vanguard needs to design its own answer to: "which broker / sizer / exit strategy / risk gate actually captured the predicted edge?" That includes a per-trade flywheel (proposal → trade → fill → exit → realized vs predicted PnL), realization metrics per-broker / per-strategy / per-paper-live-mode, an exec-side autolab that promotes/demotes sizers and exits and broker routes, and the multi-axis monitoring (broker health, paper/live drift, KILL_SWITCH false-positive rate) that lorien-style healing and watchtower-style alerts would protect. **Resolved to:** future `plans/vanguard-execution-flywheel.md` (TBC). Out of scope here; the decoupling unblocks it. Likely the natural Stage E once Stage D ships.
+- **Polymarket coverage in outrider's research pipeline.** Outrider's `forge/` collects kalshi market data today; needs a polymarket collector to populate the `polymarket` channel of `candidate_instruments`. Resolved to: future `plans/outrider-polymarket-coverage.md` (TBC).
+- **Options-structure proposing in outrider.** To populate the `options` channel of `candidate_instruments`, outrider's council needs to map insights to specific options structures (calendar spreads, vol plays, directional spreads). Requires options-chain awareness in `forge/` (some IV signals already collected; needs more). Resolved to: future `plans/outrider-options-structuring.md` (TBC).
+- **OutriderExecution (premium product layer).** Given an insight + a customer's broker capabilities + capital constraints, recommend the optimal cross-channel expression (which combination of kalshi + options + polymarket maximizes capital efficiency for THIS customer). Customer-specific intelligence; NOT part of OutriderResearch's core. Resolved to: future `plans/outrider-execution-product.md` (TBC). Likely a separately-priced product line.
+- **Trading-profile endpoint deprecation.** B.1.2 shipped `GET /v1/reference/trading-profile` but the sharper architectural review concluded vanguard's deployment config doesn't belong on outrider's API surface. Vanguard reads trading-profile from its own env/config. The endpoint stays dormant until cleanup. Resolved to: future `plans/deprecate-trading-profile-endpoint.md` (TBC).
+- **Vanguard's own execution flywheel + autolab.** Vanguard currently has no learning loop of its own — it's been free-riding on outrider's flywheel/lorien/watchtower machinery for orchestration. Post-separation, vanguard needs to design its own answer to: "which broker / sizer / exit strategy / risk gate actually captured the predicted edge?" That includes a per-trade flywheel (proposal → trade → fill → exit → realized vs predicted PnL), realization metrics per-broker / per-strategy / per-paper-live-mode, an exec-side autolab that promotes/demotes sizers and exits and broker routes, and the multi-axis monitoring (broker health, paper/live drift, KILL_SWITCH false-positive rate) that lorien-style healing and watchtower-style alerts would protect. **Resolved to:** future `plans/vanguard-execution-flywheel.md` (TBC). Out of scope here; the decoupling unblocks it.
 - **Audit outrider's own test suite for trade-side leaks.** `outrider/tests/aegis/integration/{paper_trade_pipeline,trade_lifecycle_canary,options_paper_pipeline,unified_routing}.py` are vanguard-domain tests living in outrider. Move to vanguard or delete. Resolved to: `journal/2026-04-25-ci-test-bring-up.md` (filed during Layer-1 CI work) → follow-up plan to be created when this plan reaches Stage D.
 - **Outrider's six collection-error test files** (`test_calibration.py`, `test_weather_wiring.py`, etc.) reference renamed module paths post-split. Resolved to: `journal/2026-04-25-ci-test-bring-up.md` → out of scope here; quick fix in a separate PR.
 - **Outrider cluster-registry test-isolation bug** (worked around via per-file pytest invocation in `scripts/test-trade-critical.sh`). Resolved to: `journal/2026-04-25-ci-test-bring-up.md` → out of scope here.
