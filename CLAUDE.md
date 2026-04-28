@@ -65,7 +65,7 @@ Treat Claude Code memory as cached guidance. Verify against this repo before cit
 - Things that change fast (memory rots): each tool's current version, current PR/commit refs, "today's" / "this week's" work. Check the tap formula or run `<tool> version`; check `.cortex/state.md` or the relevant tool's `.cortex/journal/`.
 - Things that change slowly (memory tends to be reliable): each tool's role; the four-tool composition; the file-contract invariant; the release flow shape; `.cortex/` invariants.
 
-<!-- conductor:begin v0.8.1 -->
+<!-- conductor:begin v0.8.2 -->
 ## Conductor delegation
 
 This project has [conductor](https://github.com/autumngarage/conductor)
