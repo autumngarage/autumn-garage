@@ -1,11 +1,11 @@
-# Sentinel as drop-in autonomous engineer — plan written
+# Sentinel-as-drop-in-engineer — strategic direction + meta-repo discipline tightened
 
 **Date:** 2026-04-28
 **Type:** decision
-**Trigger:** T1.1 (touches `.cortex/plans/`)
-**Cites:** plans/sentinel-autonomous-engineer, plans/sentinel-conductor-migration, plans/sentinel-cortex-t16-integration, doctrine/0003-llm-providers-compose-by-contract
+**Trigger:** T1.1 (touches `.cortex/plans/`) + meta-repo discipline clarification
+**Cites:** sentinel/.cortex/plans/sentinel-autonomous-engineer (lives in sentinel), sentinel/.cortex/plans/sentinel-conductor-migration (lives in sentinel), doctrine/0003-llm-providers-compose-by-contract, doctrine/0006-autumn-garage-is-meta-context (incoming)
 
-> Wrote `plans/sentinel-autonomous-engineer.md` to capture the product framing surfaced in today's Hermes-comparison conversation: Sentinel as drop-in autonomous engineer with Cortex/Conductor/Touchstone as load-bearing dependencies via subprocess + file contract.
+> Today's Hermes-comparison conversation produced (1) a product direction for Sentinel as drop-in autonomous engineer with cortex/conductor/touchstone as load-bearing dependencies, (2) four cross-cutting decisions resolved through deep research, (3) a tightened meta-repo discipline: autumn-garage holds doctrine + state + journal + templates + shared infra only. All plans — even cross-cutting ones — live in the primary owner's repo. Cross-cutting decisions become *doctrine entries* here; cross-cutting *work* gets broken into per-tool plans/issues.
 
 ## Context
 
@@ -27,20 +27,23 @@ Net: Sentinel can be the only autonomous engineer that ships with project memory
 - Existing `sentinel-conductor-migration` plan inherited as Wave 1 prerequisite — deliberately leaves the import-vs-subprocess tension unresolved (Open Question §4) for a short design spike.
 - Renamed proposed `sentinel watch` → "scheduled `sentinel work`" per user note: stay on the existing command surface, don't fork a new subcommand.
 
-## Updates 2026-04-28 evening
+## Discipline tightening (later in the same session)
 
-Two principle clarifications applied later in the same session, both reflected in plan updates:
+Three principle clarifications, applied progressively:
 
-1. **Per-tool work doesn't belong in autumn-garage.** Plans for tool-specific change live in the tool's own repo, or as GitHub issues against that tool. autumn-garage's `.cortex/plans/` is reserved for cross-tool coordination thinking. The plan was slimmed accordingly: per-tool task lists removed; replaced with a brief pointer to issue families per repo. Existing `sentinel-conductor-migration.md` flagged as a candidate to move into sentinel's own repo.
-2. **Four open questions resolved through deep research** (parallel Explore-agent runs on 2026-04-28, citing ESLint/TS/Ruff for config patterns, Homebrew docs + pre-commit/terraform precedents for packaging, GitHub Issue Forms + OpenAPI for schema versioning, LSP/MCP/dmypy/eslint_d/git for subprocess-vs-daemon trade-offs). Decisions baked into the plan: (1) Sentinel ships defaults; `sentinel init` seeds Cortex; (2) two taps — `tools/` à la carte + `garage/` meta-formula; (3) frontmatter version + immutable HTML anchors for cycle-artifact schema; (4) subprocess for Sentinel→Conductor seam, revising the 2026-04-24 migration plan's import choice.
+1. **Per-tool work doesn't belong in autumn-garage.** Plans for tool-specific change live in the tool's own repo, or as GitHub issues against that tool.
+2. **Four open questions resolved through deep research** (parallel Explore-agent runs on 2026-04-28, citing ESLint/TS/Ruff for config patterns, Homebrew docs + pre-commit/terraform precedents for packaging, GitHub Issue Forms + OpenAPI for schema versioning, LSP/MCP/dmypy/eslint_d/git for subprocess-vs-daemon trade-offs). Decisions: (a) Sentinel ships default Doctrine; `sentinel init` seeds Cortex; (b) two taps — `tools/` à la carte + `garage/` meta-formula; (c) frontmatter version + immutable HTML anchors for cycle-artifact schema; (d) subprocess for Sentinel→Conductor seam, revising the 2026-04-24 migration plan's import choice.
+3. **Even cross-cutting plans live in the primary owner's repo.** The Sentinel-as-drop-in plan I wrote in autumn-garage was reverted; the plan lives in sentinel instead. autumn-garage's role is meta-context only: doctrine, state, journal, templates, shared infra. The pattern is "reads upward from tool .cortex/, writes downward as PRs/issues to tool repos." Doctrine 0006 codifies this (incoming).
 
 ## Consequences / action items — completed 2026-04-28
 
-- [x] Wave 1 issues filed: **sentinel#89** (subprocess migration), **sentinel#90** (default Doctrine pack), **cortex#60** (grep filter audit), **cortex#61** (`--seed-from` flag), **conductor#93** (CLI contract docs + regression test).
-- [x] Migration plan moved: `sentinel-conductor-migration.md` from `autumn-garage/.cortex/plans/` to `~/repos/sentinel/.cortex/plans/` (Slice B + Key design decisions revised for subprocess seam, header banner records the move).
-- [x] Autumn-garage plan body updated to reference issues and the migration plan's new home.
+- [x] Wave 1 GitHub issues filed across tool repos: **sentinel#89** (subprocess migration), **sentinel#90** (default Doctrine pack), **cortex#60** (grep filter audit), **cortex#61** (`--seed-from` flag), **conductor#93** (CLI contract docs + regression test).
+- [x] `sentinel-conductor-migration.md` moved from autumn-garage to sentinel/.cortex/plans/ (Slice B + Key design decisions revised for subprocess seam). PR: autumngarage/sentinel#91.
+- [x] `sentinel-autonomous-engineer.md` moved from autumn-garage to sentinel/.cortex/plans/ (cross-cutting product plan; primary owner is sentinel). Same PR: autumngarage/sentinel#91.
 
-## Pending
+## Pending — meta-repo cleanup sweep
 
-- [ ] Wave 2–4 issues: filed when Wave 1 lands so they're written against current code (read-side cortex consumption, rejection fold, file-state isolation, cycle-artifact schema, init bootstrap, trust controls, scheduled work, Touchstone PR-body anchor consumer, reviewer journal awareness).
-- [ ] Track the plan via Cortex once Phase D (`cortex journal append`) ships; until then plan updates go through manual file edits.
+- [ ] Doctrine 0006 codifying the meta-repo discipline (autumn-garage holds only meta-context; plans live in tool repos).
+- [ ] Move 14 other tool/vanguard-specific plans out of autumn-garage to their owning repos: 4 → conductor, 2 → sentinel, 1 → touchstone, 1 → autumn-mail, 7 → vanguard (creates `.cortex/plans/`).
+- [ ] End state: autumn-garage's `.cortex/plans/` empty.
+- [ ] Wave 2–4 issues: filed when Wave 1 lands so they're written against current code.
