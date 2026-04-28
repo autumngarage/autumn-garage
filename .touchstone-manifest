@@ -8,7 +8,10 @@ principles/git-workflow.md
 principles/pre-implementation-checklist.md
 principles/README.md
 scripts/codex-review.sh
+scripts/branch-guard.sh
+scripts/emergency-disclosure.sh
 scripts/touchstone-run.sh
 scripts/open-pr.sh
 scripts/merge-pr.sh
 scripts/cleanup-branches.sh
+.claude/settings.json
