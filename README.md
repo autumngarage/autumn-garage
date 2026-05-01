@@ -1,3 +1,16 @@
+```text
+    _         _                            ____
+   / \  _   _| |_ _   _ _ __ ___  _ __    / ___| __ _ _ __ __ _  __ _  ___
+  / _ \| | | | __| | | | '_ ` _ \| '_ \  | |  _ / _` | '__/ _` |/ _` |/ _ \
+ / ___ \ |_| | |_| |_| | | | | | | | | | | |_| | (_| | | | (_| | (_| |  __/
+/_/   \_\__,_|\__|\__,_|_| |_| |_|_| |_|  \____|\__,_|_|  \__,_|\__, |\___|
+                                                                |___/
+```
+
+> *The umbrella for four small CLIs that compose into one workflow.*
+>
+> by **Autumn Garage** · home of [Touchstone](https://github.com/autumngarage/touchstone) · [Cortex](https://github.com/autumngarage/cortex) · [Sentinel](https://github.com/autumngarage/sentinel) · [Conductor](https://github.com/autumngarage/conductor)
+
 # Autumn Garage
 
 Coordination repo for the Autumn Garage quartet:
