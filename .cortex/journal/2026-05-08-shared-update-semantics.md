@@ -39,11 +39,10 @@ Per-tool work tracked as GitHub issues against each tool repo (per the autumn-ga
 
 ## Consequences / action items
 
-- [x] Doctrine 0008 written and committed
+- [x] Doctrine 0008 written and committed (autumn-garage PR [#30](https://github.com/autumngarage/autumn-garage/pull/30))
 - [x] Journal entry (this file)
-- [ ] Issue filed: autumngarage/touchstone — rename `sync`→`update-all`, move review-trend off `doctor`
-- [ ] Issue filed: autumngarage/cortex — add `update` as primary verb; alias `sync`
-- [ ] Issue filed: autumngarage/sentinel — add `update` and `doctor`
-- [ ] Issue filed: autumngarage/conductor — add `update`; alias `refresh-consumers`→`update-all`
-- [ ] Update `.cortex/state.md` once the four issues are filed (add to "Open decisions" or a new "Cross-tool initiatives" line)
+- [x] Issue filed: [autumngarage/touchstone#257](https://github.com/autumngarage/touchstone/issues/257) — rename `sync`→`update-all`, move review-trend off `doctor`
+- [x] Issue filed: [autumngarage/cortex#238](https://github.com/autumngarage/cortex/issues/238) — add `update` as primary verb; alias `sync`
+- [x] Issue filed: [autumngarage/sentinel#118](https://github.com/autumngarage/sentinel/issues/118) — add `update` and `doctor`
+- [x] Issue filed: [autumngarage/conductor#303](https://github.com/autumngarage/conductor/issues/303) — add `update`; alias `refresh-consumers`→`update-all`
 - [ ] After all four ship: a single section in autumn-garage README explaining the three verbs once, in lieu of per-tool sections
