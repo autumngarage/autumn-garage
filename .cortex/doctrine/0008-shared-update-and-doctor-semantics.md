@@ -2,7 +2,7 @@
 ID: 0008
 Title: Shared update / update-all / doctor semantics across the quartet
 Date: 2026-05-08
-Status: Active
+Status: Accepted
 Load-priority: always
 ---
 
