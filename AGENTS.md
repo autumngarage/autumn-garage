@@ -45,7 +45,7 @@ When in doubt about whether a decision belongs here or in one of the tool repos:
 
 The sibling dogfood project `autumn-mail` has its own `.cortex/` for project-local decisions.
 
-<!-- conductor:begin v0.8.2 -->
+<!-- conductor:begin v0.10.32 -->
 ## Conductor delegation
 
 This project has [conductor](https://github.com/autumngarage/conductor)
