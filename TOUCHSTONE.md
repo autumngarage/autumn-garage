@@ -1,10 +1,3 @@
-# Autumn Garage — Agent Instructions
-
-<!-- touchstone:steering:start -->
-
-<!-- This block is generated from TOUCHSTONE.md. `touchstone update` refreshes it.
-     Edit content OUTSIDE the markers; touchstone will not touch project-owned content. -->
-
 ## Touchstone — Shared Agent Steering
 
 You are an AI agent (Claude Code, Codex, or another driving CLI) working in a Touchstone-bootstrapped project. This block is the universal contract: rules that apply on every turn, plus a routing table to deeper docs you should consult when specific triggers fire. Project-specific guidance lives outside this block in your driver's steering doc (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`).
@@ -80,64 +73,3 @@ Claude Code agents: the Touchstone-bundled user-scoped skills (`touchstone-git-w
 ## Orientation
 
 If `.cortex/state.md` exists in the project, read it at session start for the current state of in-flight work.
-
-<!-- touchstone:steering:end -->
-
-
-Any agent working in this repo should:
-
-1. Read `@.cortex/protocol.md` and `@.cortex/state.md` first.
-2. Treat this repo as coordination-only. No application code belongs here.
-3. Respect the Append-only Journal and Immutable-with-Supersede Doctrine invariants.
-4. Prefer editing existing `.cortex/` files to creating new ones when scope permits.
-5. Validate changes with `cortex doctor` before committing.
-
-When in doubt about whether a decision belongs here or in one of the tool repos:
-
-- If it affects **one tool**, it belongs in that tool's `.cortex/`.
-- If it affects **two or more tools** or the integration contract between them, it belongs here.
-
-The sibling dogfood project `autumn-mail` has its own `.cortex/` for project-local decisions.
-
-<!-- conductor:begin v0.10.34 -->
-## Conductor delegation
-
-This project has [conductor](https://github.com/autumngarage/conductor)
-available for delegating tasks to other LLMs from inside an agent loop.
-You can shell out to it instead of trying to do everything yourself.
-
-Quick reference:
-
-- Quick factual/background ask:
-  `conductor ask --kind research --effort minimal --brief-file /tmp/brief.md`.
-- Deeper synthesis/research:
-  `conductor ask --kind research --effort medium --brief-file /tmp/brief.md`.
-- Code explanation or small coding judgment:
-  `conductor ask --kind code --effort low --brief-file /tmp/brief.md`.
-- Repo-changing implementation/debugging:
-  `conductor ask --kind code --effort high --brief-file /tmp/brief.md`.
-- Merge/PR/diff review:
-  `conductor ask --kind review --base <ref> --brief-file /tmp/review.md`.
-- Architecture/product judgment needing multiple views:
-  `conductor ask --kind council --effort medium --brief-file /tmp/brief.md`.
-- `conductor list` — show configured providers and their tags.
-
-Conductor does not inherit your conversation context. For delegation,
-write a complete brief with goal, context, scope, constraints, expected
-output, and validation; use `--brief-file` for nontrivial `exec` tasks.
-Default to `conductor ask`; use provider-specific `call` / `exec` only
-when the user explicitly asks for a provider or the semantic API does not
-fit.
-
-Providers commonly worth delegating to:
-
-- `kimi` — long-context summarization, cheap second opinions.
-- `gemini` — web search, multimodal.
-- `claude` / `codex` — strongest reasoning / coding agent loops.
-- `ollama` — local, offline, privacy-sensitive.
-- `council` kind — OpenRouter-only multi-model deliberation and synthesis.
-
-Full delegation guidance (when to delegate, when not to, error handling):
-
-    ~/.conductor/delegation-guidance.md
-<!-- conductor:end -->
