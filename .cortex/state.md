@@ -1,10 +1,10 @@
 ---
-Generated: 2026-06-04T23:22:04-04:00
+Generated: 2026-06-04T23:25:13-04:00
 Generator: cortex refresh-state v1.6.4
 Sources:
-  - HEAD sha: ba441215a8727b43b8d5fe2debabf7685aa7d7e5
+  - HEAD sha: eccd0bc32356e39ede78c436edb73307a1679047
   - .cortex/plans/*.md (1 files)
-  - .cortex/journal/*.md (39 entries, 2026-04-18..2026-06-04)
+  - .cortex/journal/*.md (40 entries, 2026-04-18..2026-06-04)
   - .cortex/doctrine/*.md (8 entries)
   - .cortex/templates/**/*.md (8 templates)
   - docs/case-studies/*.md (0 case studies)
@@ -58,6 +58,7 @@ Sources-hash:
   .cortex/journal/2026-05-09-pr-30-doctrine-0008-merged.md: 8bfd6509bc9b5e0f4edcb22ff1f974e242b4e6d1ec77096c5d849ea856427775
   .cortex/journal/2026-06-04-cortex-schema-repair.md: 69fc6b8084a71c9510c02230fe2a9bf18a4a74d0ea8207b645179b77320ab96d
   .cortex/journal/2026-06-04-pr-merged-2246.md: 4fdaeb5fc4dff58e893af6ebe9d4f6c5fd20b50fafa3ef28b491ff21593b60a0
+  .cortex/journal/2026-06-04-pr-merged-2325.md: accbcd3b327b687e55c2e87091233eeda92a47a6c337640501dc72656845bc7f
   .cortex/plans/alchemist.md: c71d8a366e8f7aa84a4c681875745f12a958092b4ae7f6f84156ac71508be724
   .cortex/templates/digest/monthly.md: 0c13cf6781d15e0858544e3919166a7c123698066e6c93fc70a3b808a8239813
   .cortex/templates/digest/quarterly.md: 8750f1eb703b158d30869204737b071213d2b33370af86ce85daed1f48943f98
@@ -67,7 +68,7 @@ Sources-hash:
   .cortex/templates/journal/plan-transition.md: 63eefc5b9c67c38cd27a4ee28ae8c85f2df5771a4fc1eb7c49d23908cafd6354
   .cortex/templates/journal/pr-merged.md: eab5a346ca8707f4166228c98e546d724da2dfe75a7d5cdd1b08d2658bc0d9ff
   .cortex/templates/journal/sentinel-cycle.md: 2945e2d94af4ec9848584b4b3e9cea7060d2968dd42e78faf21fb6f859137476
-Corpus: 39 Journal entries, 1 Plans, 8 Doctrine entries, 8 Templates, 0 Case studies
+Corpus: 40 Journal entries, 1 Plans, 8 Doctrine entries, 8 Templates, 0 Case studies
 Omitted:
   []
 Incomplete:
@@ -86,6 +87,7 @@ Spec: 0.3.1-dev
 
 - **2026-05-09** — PR #30 merged - Doctrine 0008 shared update semantics (`.cortex/journal/2026-05-09-pr-30-doctrine-0008-merged.md`, Type: pr-merged)
 - **2026-06-04** — PR #39 merged - update Touchstone-managed scaffolding to 2.11.43 (`.cortex/journal/2026-06-04-pr-merged-2246.md`, Type: pr-merged)
+- **2026-06-04** — PR #40 merged — docs(journal): auto-draft pr-merged entry for #39 (`.cortex/journal/2026-06-04-pr-merged-2325.md`, Type: pr-merged)
 
 ## Stale-now / handle-later
 
