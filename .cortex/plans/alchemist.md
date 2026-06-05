@@ -1,7 +1,13 @@
 ---
 ID: plans/alchemist
 Title: Alchemist — issue-driven transmuter for the Autumn Garage family
-Status: Active (under construction; v0.0.x deployed in dry-run, v0.1 in flight)
+Status: active
+Written: 2026-05-06
+Author: Henry
+Goal-hash: 979ffb41
+Updated-by:
+  - 2026-05-06T00:00 Henry (created)
+  - 2026-06-04T23:09-04:00 codex (schema repair)
 Date: 2026-05-06
 Owner: Henry
 Workstream: alchemist-bootstrap
@@ -11,6 +17,10 @@ Cites: doctrine/0001, doctrine/0003, doctrine/0004, doctrine/0007
 # Alchemist — issue-driven transmuter for the Autumn Garage family
 
 > Autumn Garage grows from a quartet to a quintet. **Alchemist** is a thin always-on tool that watches every Autumn-Garage-family repo for GitHub issues, dispatches them as work to **Conductor**'s agentic loop, runs **Touchstone**'s review gate over the resulting diff, and opens a PR. Alchemist owns no engineering opinions of its own — it is a chassis around the existing tools. Its job is *transmutation*: open issue in, reviewed PR out.
+
+## Why (grounding)
+
+This plan is grounded in doctrine/0001 (Autumn Garage coordinates cross-tool work without becoming a monorepo), doctrine/0003 and doctrine/0004 (tools compose through contracts and Conductor is the LLM routing peer), doctrine/0007 (shared branded surface), and journal/2026-05-06-alchemist-quintet-build-kickoff.md (the kickoff that framed Alchemist as the fifth family tool).
 
 ## Vision in one paragraph
 
@@ -49,6 +59,12 @@ Alchemist composes by file/CLI contract, never by code import. Inside an Alchemi
 - `gh pr create` — surface the result
 
 If any of those CLIs is unavailable (older garage install, missing provider, etc.), Alchemist fails fast with a structured error pointing at the missing tool. No fallbacks, no shims, no silent degradation.
+
+## Approach
+
+Build Alchemist as a small Python CLI and Railway cron service that owns orchestration only. The core loop polls a configured allowlist of GitHub repositories for `alchemist-dispatch`, checks out a branch from the target repo's default branch, renders a complete issue brief, invokes Conductor for the agentic edit loop, invokes Touchstone for the review gate, pushes the result, and opens a PR for human review. State is tracked through GitHub labels plus a small persistent cache so repeated cron ticks are idempotent.
+
+Keep model selection, provider credentials, review standards, git merge authority, and tool-specific project memory in their owning tools. Alchemist should call `gh`, `git`, `conductor`, and `touchstone` through their public CLI contracts and fail fast when any required contract is unavailable.
 
 ## Scope
 
@@ -206,6 +222,25 @@ Mirror Conductor's bootstrap:
 4. **Cortex journal integration.** Alchemist runs are a natural fit for Cortex T1.6-style journal entries (one per run, in the *target repo's* `.cortex/journal/`). Wire this in v0.1 or defer to v0.2? Lean v0.1 — it's cheap and the value is high.
 5. **Naming of the dispatch label.** `alchemist-dispatch` is verbose. Alternatives: `transmute`, `fix-me`, `alchemist`. Recommend `alchemist-dispatch` for unambiguous opt-in.
 
+## Success Criteria
+
+- Alchemist v0.1 is released and installable with `brew install autumngarage/alchemist/alchemist`.
+- A Railway cron service runs `alchemist run-once` on the configured schedule and exits cleanly when there are zero eligible issues.
+- A labelled live test issue in an Autumn Garage family repo produces exactly one PR containing the issue link, Touchstone review summary, Conductor cost log, and transcript reference.
+- Label transitions are idempotent: `alchemist-dispatch` moves to `alchemist-working`, then to `alchemist-shipped` or `alchemist-error`; reruns do not duplicate branches or PRs for a completed issue.
+- Missing `gh`, `git`, `conductor`, `touchstone`, GitHub credentials, or provider credentials fail non-zero with an actionable error and do not silently fall back.
+- Alchemist never merges autonomously; merge authority remains human-controlled through the target repo's normal PR gate.
+
+## Work items
+
+- [ ] Create `github.com/autumngarage/alchemist` with the Python package, CLI entry point, banner, tests, and release wiring.
+- [ ] Implement config loading for the repo allowlist, budget defaults, provider defaults, GitHub token reference, and persistent state path.
+- [ ] Implement the GitHub polling and label-transition loop using `gh` with idempotent branch/PR detection.
+- [ ] Implement brief rendering and Conductor invocation through the public `conductor exec` contract.
+- [ ] Implement Touchstone review invocation and PR body rendering with review summary, cost log, and transcript reference.
+- [ ] Package the Railway cron container with `gh`, `git`, Conductor, Touchstone, and Alchemist.
+- [ ] Run an end-to-end smoke test on a small labelled issue and verify the resulting PR, labels, logs, and failure behavior.
+
 ## Falsification clause
 
 If, six months after Alchemist v0.1 ships, fewer than half of the closed dispatched issues across the watched repos resulted in a merged Alchemist PR (i.e., the human consistently rejects or rewrites the output), Alchemist failed to be useful and should be wound down. The fix would be in Conductor's agentic loop quality or in the brief-rendering, not in adding more autonomy to Alchemist.
@@ -221,6 +256,4 @@ If the dispatch label sees fewer than ~5 issues per month across all watched rep
 
 ## What ratifies this plan
 
-When build starts, this plan's status flips Draft → Active and a Doctrine 0008 entry is drafted to ratify the quintet framing (parallel to Doctrine 0004 ratifying the quartet). Doctrine 0007 gets an additive amendment for the Alchemist hue. A journal entry records the transition.
-
-Until then, this is a vision document. Build commences when the user says go.
+This plan is active. Outstanding ratification items: draft a successor Doctrine entry to ratify the quintet framing (parallel to Doctrine 0004 ratifying the quartet), and add an additive amendment to Doctrine 0007 for the Alchemist hue.

@@ -2,7 +2,7 @@
 ID: 0006
 Title: Autumn-garage is meta-context, not workspace
 Date: 2026-04-28
-Status: Active
+Status: Accepted
 Load-priority: always
 ---
 
