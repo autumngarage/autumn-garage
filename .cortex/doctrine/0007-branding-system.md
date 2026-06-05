@@ -2,7 +2,7 @@
 ID: 0007
 Title: Branding system — wordmark, palette, attribution
 Date: 2026-05-01
-Status: Active
+Status: Accepted
 Load-priority: always
 ---
 
