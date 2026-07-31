@@ -33,7 +33,7 @@ Coordination markdown:
 - `.cortex/doctrine/` — cross-tool decisions (one tool's decisions live in that tool's own repo).
 - `.cortex/plans/` — coordinated workstreams.
 - `.cortex/journal/` — running record of coordination decisions and dogfood findings.
-- `integration/` — cross-tool integration specs (e.g., `providers.md`, the canonical env-var → provider mapping for Conductor's adapters).
+- `integration/` — cross-tool integration specs (e.g., `providers.md` for provider/env mapping and `sync-discipline.md` for scope-aware managed-file update behavior).
 
 Shared infrastructure (active artifacts that touch every tool's release path):
 
